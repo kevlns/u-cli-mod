@@ -20,8 +20,8 @@ jobs:
     runs-on: [self-hosted, windows, unity-2022.3.62f3c1]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
       - run: npm ci
