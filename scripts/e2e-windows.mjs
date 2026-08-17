@@ -2,7 +2,7 @@
 /**
  * Windows Unity E2E harness (self-hosted runner ready).
  *
- * Reproducible end-to-end validation for u-cli against a real
+ * Reproducible end-to-end validation for u-cli-mod against a real
  * Unity editor (Windows + Unity 2022.3.62f3c1 by default). Creates isolated
  * temp projects ONLY (never touches Debussy or other user projects), runs the
  * real CLI download / pipeline transform / install / Unity compile / server /
@@ -19,8 +19,8 @@
  *
  * Env overrides:
  *   EPC_E2E_UNITY, EPC_E2E_ROUTE (default 2022.3.62f3c1),
- *   EPC_E2E_ROOT (default C:/tmp/u-cli-e2e),
- *   EPC_E2E_REPORT (default C:/tmp/u-cli-e2e-report.json),
+ *   EPC_E2E_ROOT (default C:/tmp/u-cli-mod-e2e),
+ *   EPC_E2E_REPORT (default C:/tmp/u-cli-mod-e2e-report.json),
  *   EPC_E2E_READ_CALLS (200), EPC_E2E_MUTATION_CYCLES (20),
  *   EPC_E2E_RELOADS (5), EPC_E2E_TARGET_CALLS (60),
  *   EPC_E2E_FRESH_CACHE (1), EPC_E2E_KEEP (0), EPC_E2E_SKIP_FRESH_CLI_INSTALL (0)
@@ -45,8 +45,8 @@ const EDITOR_REVISION = '1623fc0bbb97';
 const UNITY =
   process.env.EPC_E2E_UNITY ??
   `C:/Program Files/Unity/Hub/Editor/${EDITOR_VERSION}/Editor/Unity.exe`;
-const E2E_ROOT = process.env.EPC_E2E_ROOT ?? 'C:/tmp/u-cli-e2e';
-const REPORT = process.env.EPC_E2E_REPORT ?? 'C:/tmp/u-cli-e2e-report.json';
+const E2E_ROOT = process.env.EPC_E2E_ROOT ?? 'C:/tmp/u-cli-mod-e2e';
+const REPORT = process.env.EPC_E2E_REPORT ?? 'C:/tmp/u-cli-mod-e2e-report.json';
 const READ_CALLS = Number(process.env.EPC_E2E_READ_CALLS ?? 200);
 const MUTATION_CYCLES = Number(process.env.EPC_E2E_MUTATION_CYCLES ?? 20);
 const RELOADS = Number(process.env.EPC_E2E_RELOADS ?? 5);
@@ -243,7 +243,7 @@ function readLogTail(logFile, maxChars = 4000) {
 async function main() {
   T0 = Date.now();
   const report = {
-    tool: 'u-cli',
+    tool: 'u-cli-mod',
     scope: 'windows-e2e',
     editorVersion: EDITOR_VERSION,
     editorRevision: EDITOR_REVISION,
@@ -565,7 +565,7 @@ async function main() {
 
 /** Write the JSON report (also reached from the fatal-error path) and exit. */
 async function finishAndExit() {
-  const report = REPORT_OBJ ?? { tool: 'u-cli', scope: 'windows-e2e' };
+  const report = REPORT_OBJ ?? { tool: 'u-cli-mod', scope: 'windows-e2e' };
   report.pass = failures.length === 0;
   report.failures = failures;
   report.elapsedMs = Date.now() - T0;

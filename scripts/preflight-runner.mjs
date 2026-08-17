@@ -161,7 +161,7 @@ console.log(
   JSON.stringify(
     {
       pass,
-      tool: 'u-cli preflight',
+      tool: 'u-cli-mod preflight',
       generatedAt: new Date().toISOString(),
       checks,
       suggested: {

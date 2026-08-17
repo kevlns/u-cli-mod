@@ -26,9 +26,9 @@ const FORBIDDEN_EXT = new Set([
 const FORBIDDEN_NAMES = new Set(['.attestation.p7m', '.signature', 'integrity.json']);
 
 // Rebrand regression guard: the publishable package must keep this identity.
-const EXPECTED_PACKAGE_NAME = '@kevlns/u-cli';
-// npm pack strips the scope: @kevlns/u-cli -> kevlns-u-cli-<version>.tgz
-const EXPECTED_TGZ_PREFIX = 'kevlns-u-cli-';
+const EXPECTED_PACKAGE_NAME = 'u-cli-mod';
+// Unscoped name: u-cli-mod -> u-cli-mod-<version>.tgz
+const EXPECTED_TGZ_PREFIX = 'u-cli-mod-';
 
 function npmPackArgs(packDir) {
   // Run npm through the same node binary that runs this script, using

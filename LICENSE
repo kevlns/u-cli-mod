@@ -22,7 +22,7 @@ SOFTWARE.
 
 ---
 
-Notice: this tool (u-cli) downloads the Unity Editor CLI binary and the
+Notice: this tool (u-cli-mod) downloads the Unity Editor CLI binary and the
 com.unity.pipeline package from Unity's official endpoints at runtime and
 applies compatibility patches locally. Those downloaded assets are governed by
 their own license terms (Unity Package Distribution License and Unity CLI

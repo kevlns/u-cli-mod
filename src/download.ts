@@ -81,7 +81,7 @@ export async function downloadToFile(
         const response = await fetch(current, {
           redirect: 'manual',
           signal: controller.signal,
-          headers: { 'user-agent': 'u-cli/0.1' },
+          headers: { 'user-agent': 'u-cli-mod/0.1' },
         });
         if (response.status >= 300 && response.status < 400) {
           const location = response.headers.get('location');

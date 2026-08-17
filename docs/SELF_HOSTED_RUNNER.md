@@ -1,6 +1,6 @@
 # 自托管 Unity E2E Runner（本地准备指南）
 
-仓库：github.com/kevlns/u-cli（Windows-first，非 Unity 官方项目）。
+仓库：github.com/kevlns/u-cli-mod（Windows-first，非 Unity 官方项目）。
 本目录代码不含任何发布能力。以下内容是 **注册前检查清单**。实际注册
 应在 GitHub 仓库 `Settings -> Actions -> Runners` 中完成（需要仓库管理员权限），
 本工具只会做只读预检，**不会下载或注册 Runner**。
@@ -26,7 +26,7 @@
 ## 预检命令（不注册、不下载、只读）
 
 ```powershell
-cd C:\Projects\u-cli
+cd C:\Projects\u-cli-mod
 npm ci
 npm run build
 npm run preflight:runner
@@ -79,5 +79,5 @@ unity-2022.3.62f3c1
 npm run e2e:windows
 ```
 
-报告默认写入 `C:/tmp/u-cli-e2e-report.json`。E2E 使用隔离缓存
+报告默认写入 `C:/tmp/u-cli-mod-e2e-report.json`。E2E 使用隔离缓存
 （`EPC_E2E_FRESH_CACHE=1`）并清理所有它启动的 Unity 进程。

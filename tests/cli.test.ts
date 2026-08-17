@@ -51,7 +51,7 @@ function overrideExit(program: Command): void {
 }
 
 // commander needs the full argv (node + script + args); pass a stable prefix.
-const ARGV = ['node', 'u-cli'];
+const ARGV = ['node', 'u-cli-mod'];
 
 const tmpRoots: string[] = [];
 

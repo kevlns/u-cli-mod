@@ -7,9 +7,9 @@
  *   1. project devDependency install (node_modules/.bin wiring)
  *   2. global install with a temp --prefix
  *   3. npx --package <local tgz>
- * Each mode runs `u-cli --version` and `u-cli routes`.
+ * Each mode runs `u-cli-mod --version` and `u-cli-mod routes`.
  *
- * Writes a JSON report (default C:/tmp/u-cli-package-test-report.json)
+ * Writes a JSON report (default C:/tmp/u-cli-mod-package-test-report.json)
  * and cleans up everything it created (unless EPC_PKG_KEEP=1). Never pushes to
  * any registry.
  *
@@ -23,13 +23,13 @@ import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const REPORT = process.env.EPC_PKG_REPORT ?? 'C:/tmp/u-cli-package-test-report.json';
+const REPORT = process.env.EPC_PKG_REPORT ?? 'C:/tmp/u-cli-mod-package-test-report.json';
 const ROOT = process.env.EPC_PKG_ROOT ?? join(tmpdir(), `epc-pkg-${randomUUID()}`);
 const KEEP = (process.env.EPC_PKG_KEEP ?? '0') === '1';
 const NPM_CLI = process.env.npm_execpath;
 const EXPECTED_VERSION = '0.1.0-beta.1';
-// npm pack names scoped tarballs with the scope stripped: @kevlns/u-cli -> kevlns-u-cli-<version>.tgz
-const EXPECTED_TGZ_PREFIX = 'kevlns-u-cli-';
+// Unscoped name: u-cli-mod -> u-cli-mod-<version>.tgz
+const EXPECTED_TGZ_PREFIX = 'u-cli-mod-';
 
 function npm(args, { cwd = REPO } = {}) {
   if (!NPM_CLI) throw new Error('缺少 npm_execpath；请通过 npm run test:package 执行');
@@ -90,9 +90,9 @@ async function main() {
     try {
       npm(['install', '--no-audit', '--no-fund', '--save-dev', tgzPath], { cwd: dir });
       const binDir = join(dir, 'node_modules', '.bin');
-      const candidates = ['u-cli.cmd', 'u-cli', 'u-cli.ps1'];
+      const candidates = ['u-cli-mod.cmd', 'u-cli-mod', 'u-cli-mod.ps1'];
       const bin = candidates.map((c) => join(binDir, c)).find((p) => existsSync(p));
-      if (!bin) throw new Error('node_modules/.bin 中未找到 u-cli');
+      if (!bin) throw new Error('node_modules/.bin 中未找到 u-cli-mod');
       const v = runBin(bin, ['--version']);
       const r = runBin(bin, ['routes']);
       const ok = v.exit === 0 && r.exit === 0 && v.stdout.includes(EXPECTED_VERSION) && r.stdout.includes('2022.3.62f3c1');
@@ -112,7 +112,7 @@ async function main() {
       npm(['install', '--no-audit', '--no-fund', '-g', '--prefix', prefix, tgzPath]);
       let bin = null;
       for (const name of readdirSync(prefix)) {
-        if (name === 'u-cli' || name === 'u-cli.cmd' || name === 'u-cli.ps1') {
+        if (name === 'u-cli-mod' || name === 'u-cli-mod.cmd' || name === 'u-cli-mod.ps1') {
           bin = join(prefix, name);
           break;
         }
@@ -121,7 +121,7 @@ async function main() {
         // npm may place global bins under prefix (default global layout)
         const nested = join(prefix, 'node_modules', '.bin');
         if (existsSync(nested)) {
-          bin = ['u-cli.cmd', 'u-cli', 'u-cli.ps1']
+          bin = ['u-cli-mod.cmd', 'u-cli-mod', 'u-cli-mod.ps1']
             .map((c) => join(nested, c))
             .find((p) => existsSync(p)) ?? null;
         }
@@ -143,8 +143,8 @@ async function main() {
     const dir = join(ROOT, 'case-npx');
     mkdirSync(dir, { recursive: true });
     try {
-      const out = npm(['exec', '--yes', '--package', tgzPath, '--', 'u-cli', '--version'], { cwd: dir });
-      const out2 = npm(['exec', '--yes', '--package', tgzPath, '--', 'u-cli', 'routes'], { cwd: dir });
+      const out = npm(['exec', '--yes', '--package', tgzPath, '--', 'u-cli-mod', '--version'], { cwd: dir });
+      const out2 = npm(['exec', '--yes', '--package', tgzPath, '--', 'u-cli-mod', 'routes'], { cwd: dir });
       const ok = out.includes(EXPECTED_VERSION) && out2.includes('2022.3.62f3c1');
       results.push({ case: 'npx-package', ok, version: out.trim().slice(0, 120), routes: out2.trim().slice(0, 120) });
       log(`npx-package ok=${ok}`);
@@ -173,7 +173,7 @@ async function main() {
 
   const pass = results.every((r) => r.ok);
   const report = {
-    tool: 'u-cli package matrix',
+    tool: 'u-cli-mod package matrix',
     generatedAt: new Date().toISOString(),
     tgz: tgzPath.replace(ROOT, '<root>'),
     expectedVersion: EXPECTED_VERSION,
@@ -190,7 +190,7 @@ async function main() {
 function writeReport(results) {
   writeFileSync(
     REPORT,
-    JSON.stringify({ tool: 'u-cli package matrix', generatedAt: new Date().toISOString(), results, pass: results.every((r) => r.ok) }, null, 2),
+    JSON.stringify({ tool: 'u-cli-mod package matrix', generatedAt: new Date().toISOString(), results, pass: results.every((r) => r.ok) }, null, 2),
     'utf8',
   );
 }

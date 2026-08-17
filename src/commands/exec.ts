@@ -44,7 +44,7 @@ export async function runExec(projectPath: string, cliArgs: string[], options: E
   if (!existsSync(cliPath)) {
     if (!options.downloadIfMissing) {
       throw new CliError(
-        `该路由的 CLI 尚未下载：${cliPath}。请先运行 "u-cli cli install"，或使用 --download-if-missing。`,
+        `该路由的 CLI 尚未下载：${cliPath}。请先运行 "u-cli-mod cli install"，或使用 --download-if-missing。`,
       );
     }
     await ensureCliBinary(route.cli);

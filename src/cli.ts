@@ -29,7 +29,7 @@ function printJson(value: unknown): void {
 export function buildProgram(): Command {
   const program = new Command();
   program
-    .name('u-cli')
+    .name('u-cli-mod')
     .description('按精确 Unity Editor 版本路由、下载并安装 Unity CLI 与适配后的 com.unity.pipeline（Windows-first，非 Unity 官方项目）')
     .version(packageVersion())
     // Required so `exec` can use passThroughOptions (args after the project

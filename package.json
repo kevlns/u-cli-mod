@@ -1,11 +1,11 @@
 {
-  "name": "@kevlns/u-cli",
+  "name": "u-cli-mod",
   "version": "0.1.0-beta.1",
-  "description": "u-cli: pin exact Unity Editor version routes and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first). Downloads Unity assets at runtime into the user cache; the package itself contains no Unity binaries or package source. Not an official Unity project.",
+  "description": "u-cli-mod: pin exact Unity Editor version routes and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first). Downloads Unity assets at runtime into the user cache; the package itself contains no Unity binaries or package source. Not an official Unity project.",
   "private": true,
   "type": "module",
   "bin": {
-    "u-cli": "./dist/cli.js"
+    "u-cli-mod": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -17,11 +17,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/kevlns/u-cli.git"
+    "url": "https://github.com/kevlns/u-cli-mod.git"
   },
-  "homepage": "https://github.com/kevlns/u-cli#readme",
+  "homepage": "https://github.com/kevlns/u-cli-mod#readme",
   "bugs": {
-    "url": "https://github.com/kevlns/u-cli/issues"
+    "url": "https://github.com/kevlns/u-cli-mod/issues"
   },
   "author": {
     "name": "kevlns",

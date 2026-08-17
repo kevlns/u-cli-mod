@@ -23,7 +23,7 @@ async function verifyCliFull(route: CliRoute, path: string): Promise<string> {
   const hash = await sha256File(path);
   if (hash !== route.sha256.toLowerCase()) {
     throw new CliError(
-      `CLI SHA-256 不匹配。期望 ${route.sha256}，实际 ${hash}。请运行 "u-cli cli install --force" 修复。`,
+      `CLI SHA-256 不匹配。期望 ${route.sha256}，实际 ${hash}。请运行 "u-cli-mod cli install --force" 修复。`,
     );
   }
   await verifyAuthenticode(path, route.signerSubjectContains, route.signerThumbprint);
@@ -123,12 +123,12 @@ export async function ensurePipelineSource(
 export async function verifyCliBinary(route: CliRoute): Promise<string> {
   const path = cliBinaryPath(route);
   if (!existsSync(path)) {
-    throw new CliError(`CLI 未下载：${path}。请先运行 "u-cli cli install"。`);
+    throw new CliError(`CLI 未下载：${path}。请先运行 "u-cli-mod cli install"。`);
   }
   const hash = await sha256File(path);
   if (hash !== route.sha256.toLowerCase()) {
     throw new CliError(
-      `CLI SHA-256 不匹配，拒绝执行：${path}。请运行 "u-cli cli install --force" 修复。`,
+      `CLI SHA-256 不匹配，拒绝执行：${path}。请运行 "u-cli-mod cli install --force" 修复。`,
     );
   }
   return hash;
