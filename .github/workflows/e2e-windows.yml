@@ -1,0 +1,43 @@
+name: e2e-unity-2022
+
+# Self-hosted Unity E2E. Triggered ONLY by:
+#   - manual workflow_dispatch
+#   - protected tags v* (never pull_request: self-hosted runners must not
+#     execute untrusted fork code)
+# Never publishes packages; never touches the registry.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: unity-2022.3.62f3c1 e2e
+    runs-on: [self-hosted, windows, unity-2022.3.62f3c1]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Runner preflight
+        run: node scripts/preflight-runner.mjs
+        env:
+          EPC_PREFLIGHT_SKIP_LICENSE: '1' # license is already exercised by the E2E below
+      - name: Unity E2E
+        run: node scripts/e2e-windows.mjs
+        env:
+          EPC_E2E_UNITY: C:\Program Files\Unity\Hub\Editor\2022.3.62f3c1\Editor\Unity.exe
+          EPC_E2E_REPORT: ${{ runner.temp }}\u-cli-e2e-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: u-cli-e2e-report
+          path: ${{ runner.temp }}\u-cli-e2e-report.json
+          if-no-files-found: warn

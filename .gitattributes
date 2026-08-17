@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# 这些模板中的尾随空格是 Unity 2022 .meta 字节级基线的一部分。
+templates/**/*.txt text eol=lf whitespace=-blank-at-eol
+routes/**/*.json text eol=lf

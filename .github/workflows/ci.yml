@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted:
+    name: build-lint-test-pack (hosted windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm audit --omit=dev
+      - name: Verify no forbidden artifacts in worktree
+        shell: pwsh
+        run: |
+          $forbidden = @('*.exe','*.dll','*.tgz','*.pdb','*.cs','*.unity','*.asmdef','*.prefab','*.asset')
+          $hits = Get-ChildItem -Recurse -Force | Where-Object { $_.FullName -notlike '*\node_modules\*' -and $_.FullName -notlike '*\.git\*' } | Where-Object { $n = $_.Name.ToLower(); $forbidden | Where-Object { $n -like $_ } }
+          if ($hits) { $hits.FullName; throw 'forbidden artifacts present' }

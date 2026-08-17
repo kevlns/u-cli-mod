@@ -1,0 +1,12 @@
+export { buildProgram, main } from './cli.js';
+export { CliError } from './errors.js';
+export { parseProjectVersion, readProjectInfo } from './projectVersion.js';
+export type { ProjectInfo } from './projectVersion.js';
+export { loadRoute, listEditorVersions, resolveRouteForProject, loadExpectedTree } from './routes.js';
+export type { VersionRoute, CliRoute, PipelineRoute, ExpectedTree } from './routes.js';
+export { compareTree, assertTreeMatches, sha256File, sha256Buffer } from './integrity.js';
+export { downloadToFile } from './download.js';
+export { verifyAuthenticode } from './authenticode.js';
+export { ensureCliBinary, ensurePipelineSource, verifyCliBinary } from './ensure.js';
+export { installPipeline } from './installer.js';
+export { queryUnityProcesses, guardNoRunningEditor } from './unityGuard.js';

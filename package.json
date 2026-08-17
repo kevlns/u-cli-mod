@@ -1,0 +1,63 @@
+{
+  "name": "@kevlns/u-cli",
+  "version": "0.1.0-beta.1",
+  "description": "u-cli: pin exact Unity Editor version routes and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first). Downloads Unity assets at runtime into the user cache; the package itself contains no Unity binaries or package source. Not an official Unity project.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "u-cli": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "routes",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevlns/u-cli.git"
+  },
+  "homepage": "https://github.com/kevlns/u-cli#readme",
+  "bugs": {
+    "url": "https://github.com/kevlns/u-cli/issues"
+  },
+  "author": {
+    "name": "kevlns",
+    "email": "936277610@qq.com"
+  },
+  "keywords": [
+    "unity",
+    "unity-editor",
+    "pipeline",
+    "cli",
+    "windows"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "test": "vitest run",
+    "lint": "eslint src tests --max-warnings=0",
+    "pack:guard": "node scripts/pack-guard.mjs",
+    "check": "npm run build && npm run lint && npm test && npm run pack:guard",
+    "preflight:runner": "node scripts/preflight-runner.mjs",
+    "e2e:windows": "node scripts/e2e-windows.mjs",
+    "test:package": "node scripts/test-package-install.mjs"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "tar": "^7.5.22"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^3.2.7"
+  },
+  "license": "MIT"
+}
