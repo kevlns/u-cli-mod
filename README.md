@@ -90,7 +90,7 @@ npm run check          # build + lint + 107 个 vitest 测试 + pack guard
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.0-beta.3.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.0-beta.4.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
@@ -147,6 +147,7 @@ npm run e2e:windows        # 完整 Unity E2E（真实下载/转换/编译/命�
 routes/          精确版本路由 + expected-tree 哈希清单
 routes/expected-tree/   385 文件 SHA-256 清单（含 Tests.meta）
 templates/       Unity 生成的 .meta 模板（数据，非 Unity 源码）
+AGENTS.md        AI Agent 使用规范（场景/规范/速览）
 src/             TypeScript 实现
 tests/           Vitest 单元测试（自编合成 fixture，不含 Unity 源码）
 scripts/         pack-guard / preflight-runner / e2e-windows / test-package-install

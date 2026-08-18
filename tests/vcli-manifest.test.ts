@@ -47,9 +47,10 @@ interface Manifest {
   };
 }
 
-const EXPECTED_VERSION = '0.1.0-beta.3';
+const EXPECTED_VERSION = '0.1.0-beta.4';
 const EXPECTED_PACKAGE = '@kevlns/u-cli-mod';
 const MANIFEST_PATH = 'v-cli.plugin.json';
+const AGENT_DOC_PATH = 'AGENTS.md';
 
 const MANIFEST_KEYS = ['agent', 'bin', 'command', 'description', 'environment', 'package', 'platforms', 'runtime', 'schemaVersion'];
 const COMMAND_KEYS = ['arguments', 'description', 'exitCodes', 'options', 'output', 'path', 'safety', 'usage'];
@@ -251,5 +252,13 @@ describe('release consistency (package pointer, files, versions)', () => {
     expect(manifest.package).toBe(pkg.name);
     expect(manifest.bin).toBe(Object.keys(pkg.bin)[0]);
     expect(manifest.runtime.node).toBe(pkg.engines.node);
+  });
+
+  it('ships a non-empty package AGENTS.md', () => {
+    const pkg = loadJson<{ files: string[] }>('package.json');
+    const doc = new URL(`../${AGENT_DOC_PATH}`, import.meta.url);
+    expect(pkg.files).toContain(AGENT_DOC_PATH);
+    expect(existsSync(doc)).toBe(true);
+    expect(readFileSync(doc, 'utf8').trim().length).toBeGreaterThan(0);
   });
 });
