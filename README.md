@@ -3,7 +3,7 @@
 按 **精确 Unity Editor 版本**路由、下载并安装 Unity CLI 与适配后 `com.unity.pipeline` 的命令行工具（**Windows-first**）。
 
 - 仓库：<https://github.com/kevlns/u-cli-mod>
-- 包名：`u-cli-mod`（当前 `private: true`，尚未发布）
+- npm 包：`@kevlns/u-cli-mod`（当前为 beta 预发布版本）
 - **这不是 Unity 官方项目**，与 Unity Technologies 无隶属关系；`com.unity.pipeline` 的 Unity 2022 适配属于非官方移植。
 
 ## 本仓库/包 与 不包含
@@ -22,7 +22,7 @@
 5. 事务式安装到 `Packages/com.unity.pipeline`：staging → 校验 → 备份 → 替换 → 再校验 → receipt；任一步失败自动回滚。运行中的 Unity Editor 会 fail-closed 阻止安装。
 6. `exec` 每次调用前重新校验 CLI 哈希，并**禁止任何 `--project-path` 变体覆盖目标工程**。
 
-> **缓存目录说明**：用户缓存默认为 `%LOCALAPPDATA%\editor-pipeline-cli`；该目录名沿用历史名称，以避免破坏已通过验证的缓存/收据契约。工程内的安装事务目录 `Library/editor-pipeline-cli` 同理保留。这两个目录名与 npm 包名 `u-cli-mod` 无关，属于兼容性保留项。
+> **缓存目录说明**：用户缓存默认为 `%LOCALAPPDATA%\editor-pipeline-cli`；该目录名沿用历史名称，以避免破坏已通过验证的缓存/收据契约。工程内的安装事务目录 `Library/editor-pipeline-cli` 同理保留。这两个目录名与 npm 包名 `@kevlns/u-cli-mod` 无关，属于兼容性保留项。
 
 ## 安装与构建
 
@@ -38,6 +38,16 @@ npm run check            # build + lint + test + pack:guard 一键
 要求 Node.js >= 20（Windows 10+）。
 
 ## 使用
+
+安装 beta 版本：
+
+```bash
+npm install --global @kevlns/u-cli-mod@beta
+# 或不安装，直接运行：
+npx --package @kevlns/u-cli-mod@beta u-cli-mod routes
+```
+
+常用命令：
 
 ```bash
 # 只读检查工程与路由
@@ -68,19 +78,20 @@ u-cli-mod cache clean
 
 `exec` 会把 `--project-path <工程>` 追加到 Unity CLI 参数末尾；传入任何形式的 `--project-path`（含 `-projectPath`、`--projectPath`、大小写混合）会直接报错。
 
-发布后也可 `npx u-cli-mod ...` 使用；当前版本尚未发布（`private: true`）。
+beta 阶段请显式使用 `@kevlns/u-cli-mod@beta`；发布稳定版并设置 `latest` 标签后，可使用 `npx --package @kevlns/u-cli-mod u-cli-mod ...`。
 
 ## 质量与 CI
 
 ### 单元测试与打包守卫
 
 ```bash
-npm run check          # build + lint + 94 个 vitest 测试 + pack guard
+npm run check          # build + lint + 107 个 vitest 测试 + pack guard
 ```
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `u-cli-mod`、tgz 文件名为 `u-cli-mod-*`；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.0-beta.3.tgz`（与 package.json 版本一致）；
+- `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
 ```text
@@ -88,6 +99,10 @@ npm run check          # build + lint + 94 个 vitest 测试 + pack guard
 *.cs   *.unity  *.asmdef  *.prefab  *.asset
 完整 com.unity.pipeline 目录树
 ```
+
+### v-cli 插件清单
+
+`v-cli.plugin.json` 随包发布（`package.json` 中 `vCli.manifest` 指向），声明 v-cli 命令 `unity`（平台 win32）与全部公共命令路径、参数、选项、输出与副作用元数据。`tests/vcli-manifest.test.ts` 以 `buildProgram()` 为行为源校验清单：命令树、参数、选项（flags 与描述）、usage 逐项一致，任何 CLI 定义变更未同步清单都会失败。
 
 ### 本地 tarball 安装矩阵（三模式验证）
 
@@ -122,6 +137,7 @@ npm run e2e:windows        # 完整 Unity E2E（真实下载/转换/编译/命�
 | Editor | Revision | CLI | Pipeline | 状态 |
 |---|---|---|---|---|
 | `2022.3.62f3c1` | `1623fc0bbb97` | `1.0.0-beta.2` | `0.5.0-exp.1`（适配版） | 已验证（非官方移植） |
+| `2022.3.59f1c1` | `6f0f5d6fe989` | `1.0.0-beta.2` | `0.5.0-exp.1`（适配版） | 已验证（非官方移植；同一上游 tgz 与补丁规则，适配载荷与 62f3 逐字节一致，已在 2022.3.59f1c1 编辑器完成真机回归） |
 
 新增 Editor 版本时必须：新增 `routes/<版本>.json` 与 `routes/expected-tree/<版本>.json`、对应转换模板与补丁规则，并在该版本 Unity 上重新完成编译与回归测试。不得让相近版本复用既有路由。
 

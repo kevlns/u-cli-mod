@@ -126,7 +126,13 @@ export function buildProgram(): Command {
     .passThroughOptions(true);
   execCmd.action(async (project: string, opts: { downloadIfMissing?: boolean }, command: Command) => {
     const extra = (command.args as string[]).slice(1);
-    const { exitCode } = await runExec(project, extra, {
+    // `--` is commander separator syntax, never a Unity CLI argument. With
+    // passThroughOptions commander copies the whole tail verbatim (including a
+    // literal `--` written after the project), so strip it here: runExec must
+    // only ever receive the real pipeline args, and the project-path override
+    // rejection below stays fully intact.
+    const passthroughArgs = extra.filter((arg) => arg !== '--');
+    const { exitCode } = await runExec(project, passthroughArgs, {
       downloadIfMissing: opts.downloadIfMissing,
     });
     process.exitCode = exitCode;

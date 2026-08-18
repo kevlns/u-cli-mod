@@ -16,7 +16,7 @@
  * Env: EPC_PKG_REPORT, EPC_PKG_ROOT, EPC_PKG_KEEP.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -27,9 +27,10 @@ const REPORT = process.env.EPC_PKG_REPORT ?? 'C:/tmp/u-cli-mod-package-test-repo
 const ROOT = process.env.EPC_PKG_ROOT ?? join(tmpdir(), `epc-pkg-${randomUUID()}`);
 const KEEP = (process.env.EPC_PKG_KEEP ?? '0') === '1';
 const NPM_CLI = process.env.npm_execpath;
-const EXPECTED_VERSION = '0.1.0-beta.1';
-// Unscoped name: u-cli-mod -> u-cli-mod-<version>.tgz
-const EXPECTED_TGZ_PREFIX = 'u-cli-mod-';
+const EXPECTED_VERSION = '0.1.0-beta.3';
+// Scoped name: @kevlns/u-cli-mod -> kevlns-u-cli-mod-<version>.tgz
+const EXPECTED_TGZ_FILENAME = `kevlns-u-cli-mod-${EXPECTED_VERSION}.tgz`;
+const MANIFEST_PATH = 'v-cli.plugin.json';
 
 function npm(args, { cwd = REPO } = {}) {
   if (!NPM_CLI) throw new Error('缺少 npm_execpath；请通过 npm run test:package 执行');
@@ -71,10 +72,18 @@ async function main() {
     const pack = parsed[0];
     tgzPath = join(ROOT, pack.filename);
     if (!existsSync(tgzPath)) throw new Error(`tgz 未生成：${pack.filename}`);
-    if (!pack.filename.startsWith(EXPECTED_TGZ_PREFIX)) {
-      throw new Error(`tgz 文件名与包名不符：${pack.filename}（期望前缀 ${EXPECTED_TGZ_PREFIX}）`);
+    if (pack.filename !== EXPECTED_TGZ_FILENAME) {
+      throw new Error(`tgz 文件名与预期不符：${pack.filename}（期望 ${EXPECTED_TGZ_FILENAME}）`);
+    }
+    if (!(pack.files ?? []).some((f) => f.path === MANIFEST_PATH)) {
+      throw new Error(`tgz 文件列表缺少 ${MANIFEST_PATH}`);
     }
     log(`packed ${pack.filename} (${pack.entryCount ?? '?'} files)`);
+    results.push({
+      case: 'manifest-in-tarball',
+      ok: true,
+      detail: `${MANIFEST_PATH} present, filename=${pack.filename}`,
+    });
   } catch (err) {
     log(`FAIL pack: ${err.message}`);
     results.push({ case: 'pack', ok: false, detail: err.message });
@@ -93,10 +102,27 @@ async function main() {
       const candidates = ['u-cli-mod.cmd', 'u-cli-mod', 'u-cli-mod.ps1'];
       const bin = candidates.map((c) => join(binDir, c)).find((p) => existsSync(p));
       if (!bin) throw new Error('node_modules/.bin 中未找到 u-cli-mod');
+      const manifestFile = join(dir, 'node_modules', '@kevlns', 'u-cli-mod', MANIFEST_PATH);
+      const installedPkg = JSON.parse(
+        readFileSync(join(dir, 'node_modules', '@kevlns', 'u-cli-mod', 'package.json'), 'utf8'),
+      );
+      const vcliOk = installedPkg.vCli?.manifest === MANIFEST_PATH && existsSync(manifestFile);
       const v = runBin(bin, ['--version']);
       const r = runBin(bin, ['routes']);
-      const ok = v.exit === 0 && r.exit === 0 && v.stdout.includes(EXPECTED_VERSION) && r.stdout.includes('2022.3.62f3c1');
-      results.push({ case: 'project-devDep', ok, bin: bin.replace(dir, '<dir>'), version: v.stdout.trim(), routes: r.stdout.trim().slice(0, 120) });
+      const ok =
+        v.exit === 0 &&
+        r.exit === 0 &&
+        v.stdout.includes(EXPECTED_VERSION) &&
+        r.stdout.includes('2022.3.62f3c1') &&
+        vcliOk;
+      results.push({
+        case: 'project-devDep',
+        ok,
+        bin: bin.replace(dir, '<dir>'),
+        version: v.stdout.trim(),
+        routes: r.stdout.trim().slice(0, 120),
+        manifest: vcliOk ? 'present' : 'missing',
+      });
       log(`project-devDep ok=${ok}`);
     } catch (err) {
       results.push({ case: 'project-devDep', ok: false, detail: err.message });
@@ -127,10 +153,22 @@ async function main() {
         }
       }
       if (!bin) throw new Error(`--prefix 全局安装后未找到 bin（扫描 ${prefix} 顶层失败）`);
+      const manifestFile = join(prefix, 'node_modules', '@kevlns', 'u-cli-mod', MANIFEST_PATH);
       const v = runBin(bin, ['--version']);
       const r = runBin(bin, ['routes']);
-      const ok = v.exit === 0 && r.exit === 0 && v.stdout.includes(EXPECTED_VERSION) && r.stdout.includes('2022.3.62f3c1');
-      results.push({ case: 'global-prefix', ok, bin: bin.replace(prefix, '<prefix>'), version: v.stdout.trim() });
+      const ok =
+        v.exit === 0 &&
+        r.exit === 0 &&
+        v.stdout.includes(EXPECTED_VERSION) &&
+        r.stdout.includes('2022.3.62f3c1') &&
+        existsSync(manifestFile);
+      results.push({
+        case: 'global-prefix',
+        ok,
+        bin: bin.replace(prefix, '<prefix>'),
+        version: v.stdout.trim(),
+        manifest: existsSync(manifestFile) ? 'present' : 'missing',
+      });
       log(`global-prefix ok=${ok}`);
     } catch (err) {
       results.push({ case: 'global-prefix', ok: false, detail: err.message });

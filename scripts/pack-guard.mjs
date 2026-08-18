@@ -26,9 +26,11 @@ const FORBIDDEN_EXT = new Set([
 const FORBIDDEN_NAMES = new Set(['.attestation.p7m', '.signature', 'integrity.json']);
 
 // Rebrand regression guard: the publishable package must keep this identity.
-const EXPECTED_PACKAGE_NAME = 'u-cli-mod';
-// Unscoped name: u-cli-mod -> u-cli-mod-<version>.tgz
-const EXPECTED_TGZ_PREFIX = 'u-cli-mod-';
+const EXPECTED_PACKAGE_NAME = '@kevlns/u-cli-mod';
+const EXPECTED_VERSION = '0.1.0-beta.3';
+// Scoped name: @kevlns/u-cli-mod -> kevlns-u-cli-mod-<version>.tgz
+const EXPECTED_TGZ_FILENAME = `kevlns-u-cli-mod-${EXPECTED_VERSION}.tgz`;
+const MANIFEST_PATH = 'v-cli.plugin.json';
 
 function npmPackArgs(packDir) {
   // Run npm through the same node binary that runs this script, using
@@ -59,11 +61,41 @@ function validateEntries(entries, violations) {
   }
 }
 
+function validateManifestIdentity() {
+  const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
+  if (pkg.vCli?.manifest !== MANIFEST_PATH) {
+    throw new Error(`package.json vCli.manifest 与预期不符：${pkg.vCli?.manifest ?? '缺失'}（期望 ${MANIFEST_PATH}）`);
+  }
+  if (!Array.isArray(pkg.files) || !pkg.files.includes(MANIFEST_PATH)) {
+    throw new Error(`package.json files 未包含 ${MANIFEST_PATH}`);
+  }
+  const manifest = JSON.parse(readFileSync(join(process.cwd(), MANIFEST_PATH), 'utf8'));
+  if (manifest.schemaVersion !== 1) {
+    throw new Error(`v-cli.plugin.json schemaVersion 与预期不符：${manifest.schemaVersion}（期望 1）`);
+  }
+  if (manifest.package !== EXPECTED_PACKAGE_NAME) {
+    throw new Error(`v-cli.plugin.json package 与预期不符：${manifest.package}（期望 ${EXPECTED_PACKAGE_NAME}）`);
+  }
+  if (manifest.command !== 'unity') {
+    throw new Error(`v-cli.plugin.json command 与预期不符：${manifest.command}（期望 unity）`);
+  }
+  if (manifest.bin !== 'u-cli-mod') {
+    throw new Error(`v-cli.plugin.json bin 与预期不符：${manifest.bin}（期望 u-cli-mod）`);
+  }
+  if (!Array.isArray(manifest.platforms) || !manifest.platforms.includes('win32')) {
+    throw new Error('v-cli.plugin.json platforms 必须包含 win32');
+  }
+}
+
 function run() {
   const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
   if (pkg.name !== EXPECTED_PACKAGE_NAME) {
     throw new Error(`package.json name 与预期不符：${pkg.name}（期望 ${EXPECTED_PACKAGE_NAME}）`);
   }
+  if (pkg.version !== EXPECTED_VERSION) {
+    throw new Error(`package.json version 与预期不符：${pkg.version}（期望 ${EXPECTED_VERSION}）`);
+  }
+  validateManifestIdentity();
   const dir = mkdtempSync(join(tmpdir(), 'epc-pack-guard-'));
   try {
     const [packFile, packArgsFrom] = npmPackArgs(dir);
@@ -82,6 +114,7 @@ function run() {
     const paths = (dryParsed.files ?? []).map((f) => f.path);
     if (!paths.includes('dist/cli.js')) dryViolations.push('dry-run 缺少 dist/cli.js（prepack 未生效？）');
     if (!paths.some((p) => p === 'package.json')) dryViolations.push('dry-run 缺少 package.json');
+    if (!paths.includes(MANIFEST_PATH)) dryViolations.push(`dry-run 缺少 ${MANIFEST_PATH}`);
     if (dryViolations.length > 0) {
       throw new Error(`pack --dry-run 内容违规：\n${dryViolations.join('\n')}`);
     }
@@ -97,8 +130,10 @@ function run() {
     const parsed = JSON.parse(out);
     const pack = parsed[0];
     if (!pack) throw new Error('npm pack 无输出');
-    if (!pack.filename.startsWith(EXPECTED_TGZ_PREFIX)) {
-      throw new Error(`tgz 文件名与包名不符：${pack.filename}（期望前缀 ${EXPECTED_TGZ_PREFIX}）`);
+    if (pack.filename !== EXPECTED_TGZ_FILENAME) {
+      throw new Error(
+        `tgz 文件名与预期不符：${pack.filename}（期望 ${EXPECTED_TGZ_FILENAME}，包名 ${EXPECTED_PACKAGE_NAME}，版本 ${EXPECTED_VERSION}）`,
+      );
     }
 
     const violations = [];
@@ -107,6 +142,9 @@ function run() {
     const dryPaths = paths.sort();
     if (JSON.stringify(realPaths) !== JSON.stringify(dryPaths)) {
       violations.push('dry-run 与真实 pack 文件列表不一致');
+    }
+    if (!realPaths.includes(MANIFEST_PATH)) {
+      violations.push(`真实 pack 缺少 ${MANIFEST_PATH}`);
     }
     let totalBytes = 0;
     for (const entry of pack.files ?? []) totalBytes += entry.size;

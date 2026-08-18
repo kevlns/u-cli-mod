@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "package": "@kevlns/u-cli-mod",
+  "command": "unity",
+  "bin": "u-cli-mod",
+  "description": "Pin a Unity project to its exact editor version route, download the verified Unity CLI and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first, non-official Unity tooling).",
+  "platforms": ["win32"],
+  "runtime": {
+    "node": ">=20",
+    "os": "win32"
+  },
+  "environment": [
+    {
+      "name": "LOCALAPPDATA",
+      "description": "User cache base on Windows. CLI downloads and generated pipeline packages live under %LOCALAPPDATA%\\editor-pipeline-cli (falls back to <home>\\AppData\\Local); project-scoped receipts, backups and staging live under <project>/Library/editor-pipeline-cli, never under the user cache."
+    },
+    {
+      "name": "PATH",
+      "description": "Must resolve powershell.exe; the fail-closed running-Editor guard queries Unity.exe processes through Windows PowerShell."
+    }
+  ],
+  "agent": {
+    "whenToUse": "Use for Windows-first Unity Editor 2022 workflows that must stay pinned to an exact editor version: diagnose a project against its route, list pinned routes, download the verified Unity CLI, transactionally install the adapted com.unity.pipeline package, or run Unity Pipeline CLI commands with enforced project targeting. Never use on non-Windows hosts.",
+    "globalOptions": [
+      {
+        "flags": "-V, --version",
+        "description": "output the version number"
+      },
+      {
+        "flags": "-h, --help",
+        "description": "display help for command"
+      }
+    ],
+    "commands": [
+      {
+        "path": ["doctor"],
+        "usage": "u-cli-mod doctor <project> [options]",
+        "description": "检查工程版本、路由、CLI 与 Pipeline 状态",
+        "arguments": [
+          {
+            "name": "project",
+            "required": true,
+            "description": "Path to the Unity project; must contain ProjectSettings/ProjectVersion.txt."
+          }
+        ],
+        "options": [
+          {
+            "flags": "--allow-running-editor",
+            "description": "允许查询运行中的 Editor 时不失败"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Diagnostics object: projectPath, editorVersion, editorRevision, routeSupported, routeRevision, cli {version, path, state}, pipeline {version, sourceReady, installed}, unityProcesses, supportedVersions."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error (fail-closed project/route mismatch: unreadable project or unsupported editor version)"
+        },
+        "safety": [
+          "read-only; never writes the project or the cache",
+          "fail-closed exact m_EditorVersion + m_EditorVersionWithRevision match (no wildcard, no fallback)",
+          "queries running Unity.exe processes via PowerShell; a failed query is reported in the unityProcesses output, not fatal"
+        ]
+      },
+      {
+        "path": ["routes"],
+        "usage": "u-cli-mod routes [options]",
+        "description": "列出所有已配置的 Editor 精确路由",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "-e, --editor <version>",
+            "description": "只显示指定版本"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Object { routes: [...] } with one entry per pinned route: editorVersion, editorRevision, cliVersion, cliSha256, pipelineVersion, pipelineSha256, status."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error (unpinned editor version or internal error)"
+        },
+        "safety": [
+          "read-only; no network access",
+          "uses only embedded pinned route metadata shipped in the package"
+        ]
+      },
+      {
+        "path": ["cli", "install"],
+        "usage": "u-cli-mod cli install [options]",
+        "description": "下载并校验固定版本的 Unity CLI（SHA-256 + Authenticode）",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--editor <version>",
+            "description": "限定 Editor 版本，默认全部路由"
+          },
+          {
+            "flags": "--force",
+            "description": "强制重新下载"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Object { cacheDir, results: [...] } with one entry per route: editorVersion, cliVersion, path, state (valid|downloaded), sha256."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error (download, size, SHA-256 or Authenticode verification failure)"
+        },
+        "safety": [
+          "writes only under the user cache: %LOCALAPPDATA%\\editor-pipeline-cli\\cache\\cli",
+          "downloads from the pinned Unity official CDN HTTPS URL only",
+          "verifies fixed SHA-256 + expected size + Authenticode signer subject and certificate thumbprint before the binary is placed",
+          "unverified temp download is deleted on any failure; the final file is created by atomic rename"
+        ]
+      },
+      {
+        "path": ["pipeline", "install"],
+        "usage": "u-cli-mod pipeline install <project> [options]",
+        "description": "按工程 Editor 版本事务式安装适配后的 com.unity.pipeline",
+        "arguments": [
+          {
+            "name": "project",
+            "required": true,
+            "description": "Path to the Unity project; must contain ProjectSettings/ProjectVersion.txt."
+          }
+        ],
+        "options": [
+          {
+            "flags": "--force",
+            "description": "覆盖现有不一致的包（先备份）"
+          },
+          {
+            "flags": "--allow-running-editor",
+            "description": "跳过运行中 Editor 的 fail-closed 保护"
+          },
+          {
+            "flags": "--dry-run",
+            "description": "只校验与预览，不写入工程"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Install result object: status (Installed|AlreadyInstalled|DryRun), projectPath, editorVersion, editorRevision, pipelineVersion, packagePath, fileCount, backupPath (when replaced), plus sourceDir and sourceFileCount from the caller."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error (running-Editor guard, integrity or install failure; transactional rollback on any failure)"
+        },
+        "safety": [
+          "transactional install: stage -> verify -> backup -> replace -> re-verify -> receipt; automatic rollback on any failure",
+          "fail-closed when a matching Unity Editor is running, unless --allow-running-editor",
+          "--dry-run never writes the project and never writes a receipt",
+          "source and destination trees must match the pinned expected-tree (385 files, SHA-256) before and after placement",
+          "writes only under <project>/Packages/com.unity.pipeline and <project>/Library/editor-pipeline-cli"
+        ]
+      },
+      {
+        "path": ["setup"],
+        "usage": "u-cli-mod setup <project> [options]",
+        "description": "cli install + pipeline install",
+        "arguments": [
+          {
+            "name": "project",
+            "required": true,
+            "description": "Path to the Unity project; must contain ProjectSettings/ProjectVersion.txt."
+          }
+        ],
+        "options": [
+          {
+            "flags": "--force",
+            "description": "覆盖现有不一致的包"
+          },
+          {
+            "flags": "--allow-running-editor",
+            "description": "跳过运行中 Editor 的 fail-closed 保护"
+          },
+          {
+            "flags": "--dry-run",
+            "description": "只校验与预览，不写入工程"
+          },
+          {
+            "flags": "--skip-cli",
+            "description": "跳过 CLI 下载"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Object { cli: {path, state, sha256} | null (null with --skip-cli), install: <pipeline install result> }."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error (any sub-step failure; the pipeline install rolls back)"
+        },
+        "safety": [
+          "combines the cli install and pipeline install safety contracts",
+          "fail-closed running-Editor guard unless --allow-running-editor",
+          "--dry-run never writes the project",
+          "--skip-cli avoids all CLI downloads"
+        ]
+      },
+      {
+        "path": ["exec"],
+        "usage": "u-cli-mod exec <project> [options] -- <unity-cli-args...>",
+        "description": "调用路由 CLI 执行 Unity Pipeline 命令；--project-path 由工具统一绑定",
+        "arguments": [
+          {
+            "name": "project",
+            "required": true,
+            "description": "Path to the Unity project; must contain ProjectSettings/ProjectVersion.txt."
+          }
+        ],
+        "options": [
+          {
+            "flags": "--download-if-missing",
+            "description": "CLI 缺失时自动下载"
+          }
+        ],
+        "output": {
+          "format": "text",
+          "description": "Unity CLI stdout/stderr pass through verbatim (stdio inherit); the wrapper prints no JSON of its own."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "guard or wrapper error (project-path override, missing or tampered CLI)",
+          "N": "the Unity CLI's own exit code is propagated verbatim"
+        },
+        "safety": [
+          "re-verifies the pinned CLI SHA-256 before every invocation (fail-closed on tamper)",
+          "rejects every --project-path variant (case-insensitive: --project-path, --projectPath, -projectPath, --project_path, mixed case)",
+          "always appends the resolved --project-path as the final argument; the wrapper owns project targeting",
+          "no route fallback: the project must match a pinned route exactly",
+          "the documented -- separator is consumed by the wrapper and never forwarded to the Unity CLI"
+        ]
+      },
+      {
+        "path": ["cache", "clean"],
+        "usage": "u-cli-mod cache clean [options]",
+        "description": "清理下载缓存与生成的适配包",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--all",
+            "description": "连 CLI 缓存一起清理"
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Object { cacheRoot, removed: [absolute directory paths that were removed] }."
+        },
+        "exitCodes": {
+          "0": "success",
+          "1": "error"
+        },
+        "safety": [
+          "removes only directories under the user cache root %LOCALAPPDATA%\\editor-pipeline-cli",
+          "default scope: generated packages + pipeline downloads only; without --all the CLI cache and logs are preserved"
+        ]
+      }
+    ]
+  }
+}
