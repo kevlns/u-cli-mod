@@ -19,6 +19,7 @@
  *
  * Env overrides:
  *   EPC_E2E_UNITY, EPC_E2E_ROUTE (default 2022.3.62f3c1),
+ *   EPC_E2E_REVISION (must match routes/<EPC_E2E_ROUTE>.json editorRevision),
  *   EPC_E2E_ROOT (default C:/tmp/u-cli-mod-e2e),
  *   EPC_E2E_REPORT (default C:/tmp/u-cli-mod-e2e-report.json),
  *   EPC_E2E_READ_CALLS (200), EPC_E2E_MUTATION_CYCLES (20),
@@ -41,7 +42,9 @@ import { randomUUID } from 'node:crypto';
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI_JS = join(REPO, 'dist', 'cli.js');
 const EDITOR_VERSION = process.env.EPC_E2E_ROUTE ?? '2022.3.62f3c1';
-const EDITOR_REVISION = '1623fc0bbb97';
+// Default keeps the original 62f3 run reproducible; any other route must pass
+// its exact revision (fail-closed mirroring routes/<version>.json).
+const EDITOR_REVISION = process.env.EPC_E2E_REVISION ?? '1623fc0bbb97';
 const UNITY =
   process.env.EPC_E2E_UNITY ??
   `C:/Program Files/Unity/Hub/Editor/${EDITOR_VERSION}/Editor/Unity.exe`;

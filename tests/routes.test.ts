@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadRoute, resolveRouteForProject, listEditorVersions, loadExpectedTree } from '../src/routes.js';
 import { readProjectInfo } from '../src/projectVersion.js';
+import { templatesDir } from '../src/config.js';
 
 const ROUTE_JSON = {
   schemaVersion: 1,
@@ -127,6 +128,25 @@ describe('routes', () => {
     const tree = loadExpectedTree('2022.3.62f3c1');
     expect(tree.entries).toBe(385);
     expect(Object.keys(tree.files).length).toBe(385);
+  });
+
+  it('shipped routes stay self-consistent (route + expected-tree + templates)', () => {
+    const versions = listEditorVersions();
+    expect(versions).toEqual(['2022.3.59f1c1', '2022.3.62f3c1']);
+    const trees: Record<string, ReturnType<typeof loadExpectedTree>> = {};
+    for (const version of versions) {
+      const route = loadRoute(version);
+      const tree = loadExpectedTree(version);
+      trees[version] = tree;
+      expect(tree.entries).toBe(385);
+      expect(Object.keys(tree.files).length).toBe(385);
+      for (const name of ['mono-importer-body.txt', 'dll-importer-body.txt']) {
+        expect(existsSync(join(templatesDir(), route.pipeline.templates, name)), `${version} ${name}`).toBe(true);
+      }
+    }
+    // Both routes pin the same upstream tgz + patch rules, so their adapted
+    // payloads are byte-identical and the expected trees must match exactly.
+    expect(trees['2022.3.59f1c1'].files).toEqual(trees['2022.3.62f3c1'].files);
   });
 
   it('resolves a project with exact version and revision', () => {

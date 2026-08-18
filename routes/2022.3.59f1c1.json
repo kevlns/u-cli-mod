@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "editorVersion": "2022.3.59f1c1",
+  "editorRevision": "6f0f5d6fe989",
+  "cli": {
+    "version": "1.0.0-beta.2",
+    "url": "https://public-cdn.cloud.unity3d.com/hub/prod/cli/1.0.0-beta.2/unity-windows-x64.exe",
+    "sha256": "9b6e0090510c58e20cf784b5690aeeb72929cb3f6a2221b17456c873d4d0e563",
+    "expectedSize": 104948152,
+    "signerSubjectContains": "CN=Unity Technologies SF",
+    "signerThumbprint": "228FB6411B0A144478C86AAA3CD9473C43A8ABA7"
+  },
+  "pipeline": {
+    "packageName": "com.unity.pipeline",
+    "version": "0.5.0-exp.1",
+    "upstreamRevision": "17df0ac8d6533a8c22830c89dc85a24c01f30ade",
+    "url": "https://download.packages.unity.com/com.unity.pipeline/-/com.unity.pipeline-0.5.0-exp.1.tgz",
+    "sha1": "24975d51528a67809794e52185267762a9561e15",
+    "sha256": "708757f2521d3549406aa1694eec23ad6215095a5bd6993484b03366e9974b46",
+    "expectedSize": 4773713,
+    "expectedTree": "expected-tree/2022.3.59f1c1.json",
+    "templates": "2022.3.59f1c1",
+    "targetUnityVersion": "2022.3",
+    "patchVersion": 1
+  },
+  "status": "unofficial-unity-2022-port",
+  "verifiedBy": "local integration run, 2022.3.62f3c1 (1623fc0bbb97); identical adapted payload (same pinned upstream tgz + patch rules) re-verified on 2022.3.59f1c1 (6f0f5d6fe989)"
+}
