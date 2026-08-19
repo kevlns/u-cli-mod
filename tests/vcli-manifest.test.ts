@@ -31,6 +31,10 @@ interface ManifestCommand {
   exitCodes: Record<string, string>;
   safety: string[];
 }
+interface PipelineCommandGroup {
+  group: string;
+  tools: Record<string, string>;
+}
 interface Manifest {
   schemaVersion: number;
   package: string;
@@ -44,10 +48,11 @@ interface Manifest {
     whenToUse: string;
     globalOptions: ManifestOption[];
     commands: ManifestCommand[];
+    pipelineCommands: PipelineCommandGroup[];
   };
 }
 
-const EXPECTED_VERSION = '0.1.0-beta.4';
+const EXPECTED_VERSION = '0.1.0-beta.5';
 const EXPECTED_PACKAGE = '@kevlns/u-cli-mod';
 const MANIFEST_PATH = 'v-cli.plugin.json';
 const AGENT_DOC_PATH = 'AGENTS.md';
@@ -260,5 +265,55 @@ describe('release consistency (package pointer, files, versions)', () => {
     expect(pkg.files).toContain(AGENT_DOC_PATH);
     expect(existsSync(doc)).toBe(true);
     expect(readFileSync(doc, 'utf8').trim().length).toBeGreaterThan(0);
+  });
+});
+
+describe('pipeline command catalog (agent.pipelineCommands)', () => {
+  it('is present, well-formed, and non-empty', () => {
+    const manifest = loadManifest();
+    const catalog = manifest.agent.pipelineCommands;
+    expect(Array.isArray(catalog)).toBe(true);
+    expect(catalog.length).toBeGreaterThan(0);
+
+    const seen = new Set<string>();
+    let total = 0;
+    for (const group of catalog) {
+      expect(typeof group.group).toBe('string');
+      expect(group.group.length).toBeGreaterThan(0);
+      expect(typeof group.tools).toBe('object');
+      const names = Object.keys(group.tools);
+      expect(names.length).toBeGreaterThan(0);
+      for (const name of names) {
+        expect(name).toMatch(/^[a-z][a-z0-9_]*$/);
+        expect(typeof group.tools[name]).toBe('string');
+        expect(group.tools[name].length).toBeGreaterThan(0);
+        expect(seen.has(name)).toBe(false);
+        seen.add(name);
+        total++;
+      }
+    }
+    expect(total).toBeGreaterThan(100);
+  });
+
+  it('mirrors the AGENTS.md catalog exactly (no drift)', () => {
+    const manifest = loadManifest();
+    const doc = readFileSync(new URL(`../${AGENT_DOC_PATH}`, import.meta.url), 'utf8');
+    const mdTools = new Map<string, string>();
+    for (const line of doc.split('\n')) {
+      const m = line.match(/^- `([a-z][a-z0-9_]*)` — (.+)$/);
+      if (m) mdTools.set(m[1], m[2]);
+    }
+
+    const catalogTools = new Map<string, string>();
+    for (const group of manifest.agent.pipelineCommands) {
+      for (const [name, desc] of Object.entries(group.tools)) {
+        catalogTools.set(name, desc);
+      }
+    }
+
+    expect(mdTools.size).toBe(catalogTools.size);
+    for (const [name, desc] of catalogTools) {
+      expect(mdTools.get(name), `AGENTS.md missing or differs for '${name}'`).toBe(desc);
+    }
   });
 });

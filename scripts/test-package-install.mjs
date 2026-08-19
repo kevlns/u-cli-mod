@@ -27,7 +27,7 @@ const REPORT = process.env.EPC_PKG_REPORT ?? 'C:/tmp/u-cli-mod-package-test-repo
 const ROOT = process.env.EPC_PKG_ROOT ?? join(tmpdir(), `epc-pkg-${randomUUID()}`);
 const KEEP = (process.env.EPC_PKG_KEEP ?? '0') === '1';
 const NPM_CLI = process.env.npm_execpath;
-const EXPECTED_VERSION = '0.1.0-beta.4';
+const EXPECTED_VERSION = '0.1.0-beta.5';
 // Scoped name: @kevlns/u-cli-mod -> kevlns-u-cli-mod-<version>.tgz
 const EXPECTED_TGZ_FILENAME = `kevlns-u-cli-mod-${EXPECTED_VERSION}.tgz`;
 const MANIFEST_PATH = 'v-cli.plugin.json';
