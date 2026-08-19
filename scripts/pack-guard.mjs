@@ -27,7 +27,7 @@ const FORBIDDEN_NAMES = new Set(['.attestation.p7m', '.signature', 'integrity.js
 
 // Rebrand regression guard: the publishable package must keep this identity.
 const EXPECTED_PACKAGE_NAME = '@kevlns/u-cli-mod';
-const EXPECTED_VERSION = '0.1.0-beta.5';
+const EXPECTED_VERSION = '0.1.0';
 // Scoped name: @kevlns/u-cli-mod -> kevlns-u-cli-mod-<version>.tgz
 const EXPECTED_TGZ_FILENAME = `kevlns-u-cli-mod-${EXPECTED_VERSION}.tgz`;
 const MANIFEST_PATH = 'v-cli.plugin.json';

@@ -3,7 +3,7 @@
 按 **精确 Unity Editor 版本**路由、下载并安装 Unity CLI 与适配后 `com.unity.pipeline` 的命令行工具（**Windows-first**）。
 
 - 仓库：<https://github.com/kevlns/u-cli-mod>
-- npm 包：`@kevlns/u-cli-mod`（当前为 beta 预发布版本）
+- npm 包：`@kevlns/u-cli-mod`
 - **这不是 Unity 官方项目**，与 Unity Technologies 无隶属关系；`com.unity.pipeline` 的 Unity 2022 适配属于非官方移植。
 
 ## 本仓库/包 与 不包含
@@ -39,12 +39,12 @@ npm run check            # build + lint + test + pack:guard 一键
 
 ## 使用
 
-安装 beta 版本：
+安装：
 
 ```bash
-npm install --global @kevlns/u-cli-mod@beta
+npm install --global @kevlns/u-cli-mod
 # 或不安装，直接运行：
-npx --package @kevlns/u-cli-mod@beta u-cli-mod routes
+npx --package @kevlns/u-cli-mod u-cli-mod routes
 ```
 
 常用命令：
@@ -78,7 +78,7 @@ u-cli-mod cache clean
 
 `exec` 会把 `--project-path <工程>` 追加到 Unity CLI 参数末尾；传入任何形式的 `--project-path`（含 `-projectPath`、`--projectPath`、大小写混合）会直接报错。
 
-beta 阶段请显式使用 `@kevlns/u-cli-mod@beta`；发布稳定版并设置 `latest` 标签后，可使用 `npx --package @kevlns/u-cli-mod u-cli-mod ...`。
+已发布正式版，可直接使用 `npm install -g @kevlns/u-cli-mod`，或用 `npx --package @kevlns/u-cli-mod u-cli-mod ...`。
 
 ## 质量与 CI
 
@@ -90,7 +90,7 @@ npm run check          # build + lint + 107 个 vitest 测试 + pack guard
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.0-beta.5.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.0.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 

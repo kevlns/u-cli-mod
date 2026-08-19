@@ -52,7 +52,7 @@ interface Manifest {
   };
 }
 
-const EXPECTED_VERSION = '0.1.0-beta.5';
+const EXPECTED_VERSION = '0.1.0';
 const EXPECTED_PACKAGE = '@kevlns/u-cli-mod';
 const MANIFEST_PATH = 'v-cli.plugin.json';
 const AGENT_DOC_PATH = 'AGENTS.md';
