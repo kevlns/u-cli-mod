@@ -52,9 +52,11 @@ u-cli-mod routes              # 列出支持的 Editor 路由
 
 ## Usage
 
+> 示例中的 `<project>` 指代你的 Unity 工程目录，请替换为实际路径。
+
 ```bash
 # 只读检查工程与路由
-u-cli-mod doctor C:\Projects\Debussy\debussy-client
+u-cli-mod doctor <project>
 
 # 列出支持的 Editor 路由
 u-cli-mod routes
@@ -63,17 +65,17 @@ u-cli-mod routes
 u-cli-mod cli install
 
 # 预览 Pipeline 安装（不写入）
-u-cli-mod pipeline install C:\Projects\Debussy\debussy-client --dry-run
+u-cli-mod pipeline install <project> --dry-run
 
 # 正式安装（先关闭目标工程的 Unity Editor）
-u-cli-mod pipeline install C:\Projects\Debussy\debussy-client
+u-cli-mod pipeline install <project>
 
 # CLI + Pipeline 一键准备
-u-cli-mod setup C:\Projects\Debussy\debussy-client
+u-cli-mod setup <project>
 
 # 执行 Unity Pipeline 命令（自动绑定目标工程）
-u-cli-mod exec C:\Projects\Debussy\debussy-client -- command editor_status
-u-cli-mod exec C:\Projects\Debussy\debussy-client -- command get_scene_hierarchy
+u-cli-mod exec <project> -- command editor_status
+u-cli-mod exec <project> -- command get_scene_hierarchy
 
 # 清理缓存
 u-cli-mod cache clean
@@ -129,7 +131,7 @@ npm run check          # build + lint + 110 个 vitest 测试 + pack guard
 npm run test:package
 ```
 
-构建真实 tgz，并在本地验证三种消费方式：工程 devDependency（`node_modules/.bin`）、带临时 `--prefix` 的全局安装、`npx --package <本地tgz>`；每种都执行 `u-cli-mod --version` 与 `u-cli-mod routes`。**不会**向任何 registry 发布。报告：`C:/tmp/u-cli-mod-package-test-report.json`。
+构建真实 tgz，并在本地验证三种消费方式：工程 devDependency（`node_modules/.bin`）、带临时 `--prefix` 的全局安装、`npx --package <本地tgz>`；每种都执行 `u-cli-mod --version` 与 `u-cli-mod routes`。**不会**向任何 registry 发布。报告：`<临时目录>/u-cli-mod-package-test-report.json`（可用 `EPC_PKG_REPORT` 覆盖）。
 
 ### 自托管 Runner 与 Unity E2E
 
@@ -139,7 +141,7 @@ npm run e2e:windows        # 完整 Unity E2E（真实下载/转换/编译/命�
 ```
 
 - `preflight:runner` 只读，不下载/注册 Runner；结果 JSON 输出到 stdout。
-- `e2e:windows` 使用**隔离缓存**（干净环境）或显式复用已验证缓存，创建 `C:/tmp/u-cli-mod-e2e/` 下独立临时工程，全部结束后杀掉它启动的所有 Unity 进程并清理临时工程；报告写入 `C:/tmp/u-cli-mod-e2e-report.json`。
+- `e2e:windows` 使用**隔离缓存**（干净环境）或显式复用已验证缓存，创建 `<临时目录>/u-cli-mod-e2e/` 下独立临时工程，全部结束后杀掉它启动的所有 Unity 进程并清理临时工程；报告写入 `<临时目录>/u-cli-mod-e2e-report.json`（分别可用 `EPC_E2E_ROOT`、`EPC_E2E_REPORT` 覆盖）。
 - 验收指标：200 次只读调用 100% 成功并记录 P50/P95、20 轮资源修改、5 次 Domain Reload 首次恢复、强杀重启恢复、双工程显式路由 60 次无误选、运行中 Editor 防护与 `--project-path` 覆盖拒绝。
 
 详细说明见 `docs/SELF_HOSTED_RUNNER.md`。

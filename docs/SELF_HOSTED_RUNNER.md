@@ -26,7 +26,7 @@
 ## 预检命令（不注册、不下载、只读）
 
 ```powershell
-cd C:\Projects\u-cli-mod
+cd u-cli-mod
 npm ci
 npm run build
 npm run preflight:runner
@@ -79,5 +79,5 @@ unity-2022.3.62f3c1
 npm run e2e:windows
 ```
 
-报告默认写入 `C:/tmp/u-cli-mod-e2e-report.json`。E2E 使用隔离缓存
+报告默认写入 `<临时目录>/u-cli-mod-e2e-report.json`（可用 `EPC_E2E_REPORT` 覆盖）。E2E 使用隔离缓存
 （`EPC_E2E_FRESH_CACHE=1`）并清理所有它启动的 Unity 进程。
