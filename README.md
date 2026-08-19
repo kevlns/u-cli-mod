@@ -111,7 +111,7 @@ npm run check          # build + lint + 110 个 vitest 测试 + pack guard
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.1.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.2.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
@@ -181,7 +181,7 @@ kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）
 | --- | --- | --- |
 | [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.1 |
 | [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v1.2.2 |
-| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.1.1 |
+| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.1.2 |
 
 ## Compatibility
 
