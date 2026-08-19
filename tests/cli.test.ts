@@ -100,7 +100,7 @@ describe('buildProgram (commander wiring)', () => {
     } finally {
       cap.restore();
     }
-    expect(cap.get()).toContain('0.1.0');
+    expect(cap.get()).toContain('0.1.1');
   });
 
   it('unknown top-level command fails closed with exit code 1', async () => {
