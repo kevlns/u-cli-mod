@@ -129,7 +129,7 @@
     "Editor/Commands/Navigation/NavigationCommands.cs": "2d2bfafb2f8563380c8708ecb97300250ee9bdc8a0f6a0512903247cf19a4ae5",
     "Editor/Commands/Navigation/NavigationCommands.cs.meta": "f1002bd852046ce3bd7b3dbd6cc35e707429455ded5ad2c79e1fbac965bf23a9",
     "Editor/Commands/Observability.meta": "0cef75eb0161beeff22e8ba22dac994895bd3d1bef3d86c41fe7f7e192206c73",
-    "Editor/Commands/Observability/ConsoleCommands.cs": "b4930a32a64044d3d3ad172a266058f6dee284000fcd9e31ecf298653f60cef5",
+    "Editor/Commands/Observability/ConsoleCommands.cs": "68ccace32673ee6676040350a60003d10150f9978fc082ac747466db0ad65377",
     "Editor/Commands/Observability/ConsoleCommands.cs.meta": "0b36196d922c3f6b34b49c42606a170b298694b06f6df393f3be4c75dda4c04c",
     "Editor/Commands/Observability/ConsoleLogBuffer.cs": "abba3537972218a75536bbf503c9732bc967ae6a18872d6126080111b7a3011e",
     "Editor/Commands/Observability/ConsoleLogBuffer.cs.meta": "2f4e7cbc14f9a3bd5fc2314ebde2ad6ee9b97a292b624f174242659889f24b72",

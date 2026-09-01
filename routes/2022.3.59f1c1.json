@@ -21,8 +21,8 @@
     "expectedTree": "expected-tree/2022.3.59f1c1.json",
     "templates": "2022.3.59f1c1",
     "targetUnityVersion": "2022.3",
-    "patchVersion": 1
+    "patchVersion": 2
   },
   "status": "unofficial-unity-2022-port",
-  "verifiedBy": "local integration run, 2022.3.62f3c1 (1623fc0bbb97); identical adapted payload (same pinned upstream tgz + patch rules) re-verified on 2022.3.59f1c1 (6f0f5d6fe989)"
+  "verifiedBy": "local integration run, 2022.3.62f3c1 (1623fc0bbb97); patchVersion 2 read_console + reload/restart/dual-project E2E re-verified on 2022.3.59f1c1 (6f0f5d6fe989)"
 }

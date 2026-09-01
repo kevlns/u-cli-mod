@@ -451,9 +451,10 @@
         "tools": {
           "audit": "Run a Project Auditor static-analysis scan. Returns immediately; poll audit_status until status is 'completed', then read the CSV.",
           "audit_status": "Get the status of the last audit: idle | scanning | completed | failed | interrupted | unavailable.",
-          "clear_console": "Clear the captured log buffer and the Unity Editor console.",
+          "clear_console": "Clear the Unity Editor Console and all captured pipeline console buffers.",
           "console": "Get captured Unity console output (Editor or Player; supports tail, level filtering, and follow via a cursor)",
-          "get_console_logs": "Read recently captured Editor console logs (structured).",
+          "get_console_logs": "Read the current Unity Editor Console (compatibility alias for read_console).",
+          "read_console": "Read or clear the current Unity Editor Console, including entries emitted before command initialization; supports type/text filtering, paging, formatting, and stack traces.",
           "get_performance_stats": "Read render, memory, and frame-timing stats (structured, read-only).",
           "log": "Write a message to Unity console"
         }

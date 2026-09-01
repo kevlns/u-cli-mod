@@ -55,6 +55,7 @@ const MUTATION_CYCLES = Number(process.env.EPC_E2E_MUTATION_CYCLES ?? 20);
 const RELOADS = Number(process.env.EPC_E2E_RELOADS ?? 5);
 const TARGET_CALLS = Number(process.env.EPC_E2E_TARGET_CALLS ?? 60);
 const FRESH_CACHE = (process.env.EPC_E2E_FRESH_CACHE ?? '1') !== '0';
+const SKIP_CLI_INSTALL = (process.env.EPC_E2E_SKIP_FRESH_CLI_INSTALL ?? '0') === '1';
 const KEEP = (process.env.EPC_E2E_KEEP ?? '0') === '1';
 const POLL_MS = 2000;
 const READY_TIMEOUT_MS = 300000;
@@ -290,7 +291,9 @@ async function main() {
 
 
   // 1. CLI install (fresh cache => real download + hash/signature verify; reuse => re-verify).
-  {
+  if (SKIP_CLI_INSTALL) {
+    report.sections.cliInstall = { skipped: true, reason: 'EPC_E2E_SKIP_FRESH_CLI_INSTALL=1' };
+  } else {
     const r = runCli(['cli', 'install', '--editor', EDITOR_VERSION], { env: cliEnv() });
     const state = r.json?.results?.[0]?.state;
     const ok = r.exit === 0 && (state === 'valid' || state === 'downloaded');
@@ -341,6 +344,86 @@ async function main() {
     const ready = await waitReady(projectA, { label: 'A', child, logFile });
     report.sections.serverStartA = { pid: child.pid, ...ready };
     if (!ready.ok) fail('serverStartA', `未就绪：${JSON.stringify(ready).slice(0, 1000)}`);
+  }
+
+  // 4b. read_console must read Unity's current native Console store rather
+  // than the pipeline's callback buffers. Emit a marker, deliberately clear
+  // only both callback buffers, then prove read_console still sees the marker
+  // while the streaming console command does not. Finally prove clear_console
+  // clears every store.
+  {
+    const marker = `READ_CONSOLE_HISTORY_${randomUUID().replace(/-/g, '')}`;
+    const initialClear = execReady(projectA, ['command', 'clear_console']);
+    const emit = execReady(projectA, [
+      'command', 'eval', `UnityEngine.Debug.LogError("${marker}"); return "${marker}";`,
+    ]);
+    const clearCaptureBuffers = execReady(projectA, [
+      'command', 'eval',
+      'Unity.Pipeline.Editor.Commands.Observability.ConsoleLogBuffer.Clear(); '
+        + 'Unity.Pipeline.Console.ConsoleLogCapture.Buffer.Clear(); return "capture-buffers-cleared";',
+    ]);
+    const streamAfterBufferClear = execReady(projectA, [
+      'command', 'console', '--tail', '200', '--level', 'log',
+    ]);
+    const read = execReady(projectA, [
+      'command', 'read_console', '--types', 'error', '--filterText', marker,
+      '--count', '10', '--outputFormat', 'detailed',
+    ]);
+    const alias = execReady(projectA, [
+      'command', 'get_console_logs', '--severity', 'error', '--limit', '100',
+    ]);
+
+    const streamEntries = streamAfterBufferClear.json?.data?.result?.entries ?? [];
+    const readMessages = read.json?.data?.result?.messages ?? [];
+    const aliasLogs = alias.json?.data?.result?.logs ?? [];
+    const streamHasMarker = JSON.stringify(streamEntries).includes(marker);
+    const readHasMarker = JSON.stringify(readMessages).includes(marker);
+    const aliasHasMarker = JSON.stringify(aliasLogs).includes(marker);
+
+    const finalClear = execReady(projectA, ['command', 'clear_console']);
+    const readAfterClear = execReady(projectA, [
+      'command', 'read_console', '--types', 'all', '--filterText', marker, '--count', '10',
+    ]);
+    const streamAfterClear = execReady(projectA, [
+      'command', 'console', '--tail', '200', '--level', 'log',
+    ]);
+    const readClearCount = readAfterClear.json?.data?.result?.returned;
+    const streamAfterClearEntries = streamAfterClear.json?.data?.result?.entries ?? [];
+    const streamClearHasMarker = JSON.stringify(streamAfterClearEntries).includes(marker);
+
+    const ok =
+      initialClear.exit === 0
+      && emit.exit === 0
+      && clearCaptureBuffers.exit === 0
+      && streamAfterBufferClear.exit === 0
+      && read.exit === 0
+      && alias.exit === 0
+      && !streamHasMarker
+      && readHasMarker
+      && aliasHasMarker
+      && finalClear.exit === 0
+      && readAfterClear.exit === 0
+      && streamAfterClear.exit === 0
+      && readClearCount === 0
+      && !streamClearHasMarker;
+
+    report.sections.readConsole = {
+      ok,
+      marker,
+      initialClearExit: initialClear.exit,
+      emitExit: emit.exit,
+      clearCaptureBuffersExit: clearCaptureBuffers.exit,
+      streamHasMarker,
+      readHasMarker,
+      aliasHasMarker,
+      finalClearExit: finalClear.exit,
+      readClearCount,
+      streamClearHasMarker,
+      readExit: read.exit,
+      readStderr: read.stderr.slice(0, 1000),
+      readOutput: read.stdout.slice(0, 1500),
+    };
+    if (!ok) fail('readConsole', JSON.stringify(report.sections.readConsole).slice(0, 2500));
   }
 
   // 5. Create scene (needed by get_scene_hierarchy) then READ_CALLS read-only calls.

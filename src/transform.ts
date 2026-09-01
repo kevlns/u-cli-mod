@@ -9,6 +9,7 @@ import {
 import { dirname, join, relative, sep } from 'node:path';
 import { CliError } from './errors.js';
 import { sha256Buffer, compareTree } from './integrity.js';
+import { patchConsoleCommands } from './consolePatch.js';
 import type { PipelineRoute } from './routes.js';
 
 /** Files/dirs present upstream that must NOT ship in the adapted package. */
@@ -165,6 +166,8 @@ export async function transformPackage(input: TransformInput): Promise<{ fileCou
         out = patchAssetCommands(bytes);
       } else if (rel === 'Editor/Commands/Materials/MaterialCommands.cs') {
         out = patchMaterialCommands(bytes);
+      } else if (rel === 'Editor/Commands/Observability/ConsoleCommands.cs') {
+        out = patchConsoleCommands(bytes);
       } else if (DLL_META_NAMES.includes(rel.split('/').pop()!)) {
         const { guid } = metaBody(bytes);
         out = Buffer.from(`fileFormatVersion: 2\nguid: ${guid}\n${dllImporterBody}`, 'utf8');

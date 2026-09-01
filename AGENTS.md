@@ -14,7 +14,7 @@
 - `u-cli-mod pipeline install <project> --dry-run` - 安装预览（不写入工程）
 - `u-cli-mod pipeline install <project>` - 事务式安装适配包（自动备份/回滚/receipt）
 - `u-cli-mod exec <project> -- <pipeline-args>` - 执行 Pipeline 命令（工具统一绑定 `--project-path`）
-- Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity.pipeline` 共 153 个命令，按领域分组）
+- Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity.pipeline` 共 154 个命令，按领域分组）
 - `u-cli-mod routes` / `u-cli-mod cache clean` - 路由表 / 缓存清理
 
 ## 使用规范（Agent 必须遵守）
@@ -36,7 +36,7 @@ u-cli-mod exec <project> -- command editor_status   # 3. 执行
 
 ## Pipeline 工具清单
 
-> 安装的 `com.unity.pipeline`（适配版 0.5.0-exp.1）共 **153** 个命令，经 `u-cli-mod exec <project> -- command <名> [参数]` 透传执行；参数全集以 `exec <project> -- command <名> --help` 为准。
+> 安装的 `com.unity.pipeline`（适配版 0.5.0-exp.1）共 **154** 个命令，经 `u-cli-mod exec <project> -- command <名> [参数]` 透传执行；参数全集以 `exec <project> -- command <名> --help` 为准。
 
 ### GameObject / 组件
 - `add_component` — Add a component (by type name) to a GameObject.
@@ -186,9 +186,10 @@ u-cli-mod exec <project> -- command editor_status   # 3. 执行
 ### 可观测性 / 审计
 - `audit` — Run a Project Auditor static-analysis scan. Returns immediately; poll audit_status until status is 'completed', then read the CSV.
 - `audit_status` — Get the status of the last audit: idle | scanning | completed | failed | interrupted | unavailable.
-- `clear_console` — Clear the captured log buffer and the Unity Editor console.
+- `clear_console` — Clear the Unity Editor Console and all captured pipeline console buffers.
 - `console` — Get captured Unity console output (Editor or Player; supports tail, level filtering, and follow via a cursor)
-- `get_console_logs` — Read recently captured Editor console logs (structured).
+- `get_console_logs` — Read the current Unity Editor Console (compatibility alias for read_console).
+- `read_console` — Read or clear the current Unity Editor Console, including entries emitted before command initialization; supports type/text filtering, paging, formatting, and stack traces.
 - `get_performance_stats` — Read render, memory, and frame-timing stats (structured, read-only).
 - `log` — Write a message to Unity console
 
