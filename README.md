@@ -76,6 +76,7 @@ u-cli-mod setup <project>
 # 执行 Unity Pipeline 命令（自动绑定目标工程）
 u-cli-mod exec <project> -- command editor_status
 u-cli-mod exec <project> -- command get_scene_hierarchy
+u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 
 # 清理缓存
 u-cli-mod cache clean
@@ -88,7 +89,7 @@ u-cli-mod cache clean
 1. 读取目标工程 `ProjectSettings/ProjectVersion.txt`，要求 `m_EditorVersion` 与 `m_EditorVersionWithRevision` **同时存在且与路由完全一致**（fail-closed，无通配、无“最近版本”回退）。
 2. 按路由下载固定版本的 Unity CLI：HTTPS 白名单（仅 Unity 官方 CDN），校验固定 SHA-256 + 文件大小 + Authenticode 签名主体与证书指纹，临时文件原子更名为最终文件。
 3. 按路由下载固定版本的 `com.unity.pipeline` tgz：固定 SHA-256（主）+ SHA-1（交叉），安全解包（解包前逐项拒绝绝对路径、`..`、符号/硬链接等非常规条目）。
-4. 在**用户缓存**中确定性转换：`package.json` 最低 Unity 版本、`PhysicsMaterial` 兼容、`rawRenderQueue` 读取兼容、Roslyn DLL 的 `.meta` 转为 Unity 2022 格式（保留 GUID）、删除 `Tests` 源码与失效签名文件；输出必须与 `routes/expected-tree/*.json`（含 `Tests.meta` 共 385 个文件）逐字节一致。
+4. 在**用户缓存**中确定性转换：`package.json` 最低 Unity 版本、`PhysicsMaterial` 兼容、`rawRenderQueue` 读取兼容、基于 `UnityEditor.LogEntries` 的 `read_console`、Roslyn DLL 的 `.meta` 转为 Unity 2022 格式（保留 GUID）、删除 `Tests` 源码与失效签名文件；输出必须与 `routes/expected-tree/*.json`（含 `Tests.meta` 共 385 个文件）逐字节一致。
 5. 事务式安装到 `Packages/com.unity.pipeline`：staging → 校验 → 备份 → 替换 → 再校验 → receipt；任一步失败自动回滚。运行中的 Unity Editor 会 fail-closed 阻止安装。
 6. `exec` 每次调用前重新校验 CLI 哈希，并**禁止任何 `--project-path` 变体覆盖目标工程**。
 
@@ -106,12 +107,12 @@ u-cli-mod cache clean
 ### 单元测试与打包守卫
 
 ```bash
-npm run check          # build + lint + 110 个 vitest 测试 + pack guard
+npm run check          # build + lint + 115 个 vitest 测试 + pack guard
 ```
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.2.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.3.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
@@ -142,7 +143,7 @@ npm run e2e:windows        # 完整 Unity E2E（真实下载/转换/编译/命�
 
 - `preflight:runner` 只读，不下载/注册 Runner；结果 JSON 输出到 stdout。
 - `e2e:windows` 使用**隔离缓存**（干净环境）或显式复用已验证缓存，创建 `<临时目录>/u-cli-mod-e2e/` 下独立临时工程，全部结束后杀掉它启动的所有 Unity 进程并清理临时工程；报告写入 `<临时目录>/u-cli-mod-e2e-report.json`（分别可用 `EPC_E2E_ROOT`、`EPC_E2E_REPORT` 覆盖）。
-- 验收指标：200 次只读调用 100% 成功并记录 P50/P95、20 轮资源修改、5 次 Domain Reload 首次恢复、强杀重启恢复、双工程显式路由 60 次无误选、运行中 Editor 防护与 `--project-path` 覆盖拒绝。
+- 验收指标：200 次只读调用 100% 成功并记录 P50/P95、`read_console` 原生 Console 历史读取与统一清理、20 轮资源修改、5 次 Domain Reload 首次恢复、强杀重启恢复、双工程显式路由 60 次无误选、运行中 Editor 防护与 `--project-path` 覆盖拒绝。
 
 详细说明见 `docs/SELF_HOSTED_RUNNER.md`。
 
@@ -181,7 +182,7 @@ kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）
 | --- | --- | --- |
 | [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.1 |
 | [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v1.2.2 |
-| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.1.2 |
+| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.1.3 |
 
 ## Compatibility
 
