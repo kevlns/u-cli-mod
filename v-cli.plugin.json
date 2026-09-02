@@ -51,7 +51,7 @@
         ],
         "output": {
           "format": "json",
-          "description": "Diagnostics object: projectPath, editorVersion, editorRevision, routeSupported, routeRevision, cli {version, path, state}, pipeline {version, sourceReady, installed}, unityProcesses, supportedVersions."
+          "description": "Diagnostics object: projectPath, editorVersion, editorRevision, routeSupported, routeRevision, cli {version, path, state}, pipeline {version, patchVersion, installedPatchVersion, sourceReady, present, installed, state: missing|outdated|invalid|current}, unityProcesses, supportedVersions. installed/sourceReady require expected-tree integrity. Exit 0 means diagnostics completed, not readiness. Close the target Editor and use pipeline install --force for outdated/invalid. npm upgrades do not update project packages."
         },
         "exitCodes": {
           "0": "success",

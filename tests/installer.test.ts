@@ -84,7 +84,12 @@ describe('installPipeline', () => {
     for (const [rel, bytes] of Object.entries(FILES)) {
       expect(readFileSync(join(dest, rel))).toEqual(bytes);
     }
-    expect(existsSync(join(ctx.project, 'Library', 'editor-pipeline-cli', 'receipt.json'))).toBe(true);
+    const receiptPath = join(ctx.project, 'Library', 'editor-pipeline-cli', 'receipt.json');
+    expect(existsSync(receiptPath)).toBe(true);
+    expect(JSON.parse(readFileSync(receiptPath, 'utf8'))).toMatchObject({
+      pipelineVersion: '0.5.0-exp.1',
+      patchVersion: 1,
+    });
   });
 
   it('is idempotent without force', async () => {

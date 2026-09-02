@@ -144,6 +144,7 @@ export async function installPipeline(
       editorVersion: project.editorVersion,
       editorRevision: project.revision,
       pipelineVersion: route.pipeline.version,
+      patchVersion: route.pipeline.patchVersion,
       packagePath: destination,
       backupPath: backupPath ?? null,
       source: `${route.pipeline.packageName}@${route.pipeline.version} (patched ${route.pipeline.patchVersion})`,

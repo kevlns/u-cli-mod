@@ -19,12 +19,13 @@
 
 ## 使用规范（Agent 必须遵守）
 
-1. **首次对某工程执行 `exec` 前**，必须确保 `doctor` 通过且适配包已安装（`setup` 或 `pipeline install` 已完成）；未就绪时先跑 `setup`，不要直接 `exec`。
+1. **首次对某工程执行 `exec` 前**，必须检查 `doctor` 的 `cli.state="valid"`、`pipeline.state="current"` 且 `pipeline.installed=true`。`doctor` 退出成功仅表示诊断完成，不代表工程已就绪；`pipeline.present=true` 也只表示包存在。`missing` 时先跑 `setup`；`outdated`/`invalid` 时先关闭目标 Editor，再通过 `pipeline install <project> --force` 备份并更新。升级 npm 包不会自动更新工程内适配包，不要直接 `exec`。
 2. **禁止在 `exec` 参数中传入任何 `--project-path` 变体**（`-projectPath`、`--project_path`、大小写混合、`=` 形式等）——目标工程由工具统一绑定，传入即报错是预期保护，不要尝试绕过。
 3. **运行中的 Unity Editor 是 fail-closed**：安装被阻止时引导用户先关闭目标工程的 Editor；除非用户显式要求，不得使用 `--allow-running-editor` 绕过。
 4. **安装是事务式的**（staging → 校验 → 备份 → 替换 → 再校验 → receipt，失败自动回滚）：不要手动清理工程内 `Packages/com.unity.pipeline` 或 `Library/editor-pipeline-cli`。
 5. **版本路由是精确匹配**（`m_EditorVersion` + revision 同时一致），没有"就近版本"回退；工程版本不在路由表内时如实报告支持列表，不得猜测、不得改写 `ProjectVersion.txt`。
 6. `exec` 每次调用前都会重新校验 CLI 哈希（防篡改），属正常行为；校验失败按提示跑 `u-cli-mod cli install --force` 修复即可。
+7. **读取 Editor 当前 Console 首选 `command read_console`**，`get_console_logs` 是兼容别名；`command console` 读取回调捕获流，适合 `since`/cursor 跟随，但不能代替原生 Console 快照。工具必须经 `command <名>` 调用。若实际 schema 中缺少 `read_console`，先检查 `doctor` 的 `patchVersion`/`installedPatchVersion` 和 `state`，不要将其误认成 `console` 的别名。
 
 ## 典型流程
 
@@ -32,7 +33,10 @@
 u-cli-mod doctor <project>        # 1. 体检（只读）
 u-cli-mod setup <project>         # 2. 就绪（CLI + 适配包）
 u-cli-mod exec <project> -- command editor_status   # 3. 执行
+u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 ```
+
+`doctor.pipeline` 的 `patchVersion` 为当前路由要求的补丁版本，`installedPatchVersion` 为 receipt 记录的版本（旧 receipt 也兼容，未知为 null）；`state` 为 `missing | outdated | invalid | current`。只有完整 expected-tree 校验通过且没有旧 patch receipt 时才返回 `installed=true`；`sourceReady` 同样经过文件树校验。
 
 ## Pipeline 工具清单
 

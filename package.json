@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/u-cli-mod",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "u-cli-mod: pin exact Unity Editor version routes and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first). Downloads Unity assets at runtime into the user cache; the package itself contains no Unity binaries or package source. Not an official Unity project.",
   "private": false,
   "publishConfig": {
