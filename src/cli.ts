@@ -6,7 +6,7 @@ import { runRoutes } from './commands/routesCmd.js';
 import { runCliInstall } from './commands/cliInstall.js';
 import { runPipelineInstall } from './commands/pipelineInstall.js';
 import { runSetup } from './commands/setup.js';
-import { runExec } from './commands/exec.js';
+import { runExec, extractWaitOption } from './commands/exec.js';
 import { runCacheClean } from './commands/cacheClean.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -26,6 +26,17 @@ function printJson(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
+/** Non-negative seconds for --wait; undefined keeps the wrapper default. */
+function parseWaitSeconds(raw: string | undefined): number | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new CliError(`--wait 需要非负秒数，收到：${raw}`);
+  }
+  return value;
+}
 export function buildProgram(): Command {
   const program = new Command();
   program
@@ -121,10 +132,16 @@ export function buildProgram(): Command {
     .command('exec <project>')
     .description('调用路由 CLI 执行 Unity Pipeline 命令；--project-path 由工具统一绑定')
     .option('--download-if-missing', 'CLI 缺失时自动下载')
+    .option('--wait <seconds>', '长任务等待上限（秒）：到点后任务在 Editor 内继续，立即返回；0 = 立即返回')
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .passThroughOptions(true);
-  execCmd.action(async (project: string, opts: { downloadIfMissing?: boolean }, command: Command) => {
+  execCmd.action(
+    async (
+      project: string,
+      opts: { downloadIfMissing?: boolean; wait?: string },
+      command: Command,
+    ) => {
     const extra = (command.args as string[]).slice(1);
     // `--` is commander separator syntax, never a Unity CLI argument. With
     // passThroughOptions commander copies the whole tail verbatim (including a
@@ -132,8 +149,10 @@ export function buildProgram(): Command {
     // only ever receive the real pipeline args, and the project-path override
     // rejection below stays fully intact.
     const passthroughArgs = extra.filter((arg) => arg !== '--');
-    const { exitCode } = await runExec(project, passthroughArgs, {
+    const forwarded = extractWaitOption(passthroughArgs);
+    const { exitCode } = await runExec(project, forwarded.args, {
       downloadIfMissing: opts.downloadIfMissing,
+      waitSeconds: forwarded.waitSeconds ?? parseWaitSeconds(opts.wait),
     });
     process.exitCode = exitCode;
   });

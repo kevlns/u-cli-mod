@@ -15,6 +15,7 @@
 - `u-cli-mod pipeline install <project>` - 事务式安装适配包（自动备份/回滚/receipt）
 - `u-cli-mod exec <project> -- <pipeline-args>` - 执行 Pipeline 命令（工具统一绑定 `--project-path`）
 - Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity.pipeline` 共 154 个命令，按领域分组）
+- `u-cli-mod exec <project> [--wait <秒>] -- <pipeline-args>` - 长任务默认 5s 后让出控制权，结果用对应的 `command <name>_status` 轮询
 - `u-cli-mod routes` / `u-cli-mod cache clean` - 路由表 / 缓存清理
 
 ## 使用规范（Agent 必须遵守）
@@ -27,12 +28,15 @@
 6. `exec` 每次调用前都会重新校验 CLI 哈希（防篡改），属正常行为；校验失败按提示跑 `u-cli-mod cli install --force` 修复即可。
 7. **读取 Editor 当前 Console 首选 `command read_console`**，`get_console_logs` 是兼容别名；`command console` 读取回调捕获流，适合 `since`/cursor 跟随，但不能代替原生 Console 快照。工具必须经 `command <名>` 调用。若实际 schema 中缺少 `read_console`，先检查 `doctor` 的 `patchVersion`/`installedPatchVersion` 和 `state`，不要将其误认成 `console` 的别名。
 
+8. **长任务默认不阻塞**：`run_tests` 只等待 5 秒，到点后任务仍在 Editor 内继续执行，工具打印输出日志路径并立即返回（退出码 0）。此时**不要重复发起同一命令**，改用 `command test_status` 轮询结果；需要同步拿到完整 `Summary` 时传 `--wait <秒>`，并优先用 `--filter <命名空间或类名>` 缩小范围（通常数秒内即可同步返回）。
 ## 典型流程
 
 ```bash
 u-cli-mod doctor <project>        # 1. 体检（只读）
 u-cli-mod setup <project>         # 2. 就绪（CLI + 适配包）
 u-cli-mod exec <project> -- command editor_status   # 3. 执行
+u-cli-mod exec <project> -- command run_tests --mode EditMode --filter <命名空间或类名>  # 小范围：同步返回 Summary
+u-cli-mod exec <project> -- command run_tests --mode EditMode                                  # 全量：5s 后让出，轮询 test_status
 u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 ```
 

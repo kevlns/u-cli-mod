@@ -217,11 +217,15 @@
           {
             "flags": "--download-if-missing",
             "description": "CLI 缺失时自动下载"
+          },
+          {
+            "flags": "--wait <seconds>",
+            "description": "长任务等待上限（秒）：到点后任务在 Editor 内继续，立即返回；0 = 立即返回"
           }
         ],
         "output": {
           "format": "text",
-          "description": "Unity CLI stdout/stderr pass through verbatim (stdio inherit); the wrapper prints no JSON of its own."
+          "description": "Unity CLI stdout/stderr pass through verbatim (stdio inherit); the wrapper prints no JSON of its own. When the wait budget expires the child keeps running and the wrapper prints the log path plus the status command to poll."
         },
         "exitCodes": {
           "0": "success",
@@ -233,7 +237,8 @@
           "rejects every --project-path variant (case-insensitive: --project-path, --projectPath, -projectPath, --project_path, mixed case)",
           "always appends the resolved --project-path as the final argument; the wrapper owns project targeting",
           "no route fallback: the project must match a pinned route exactly",
-          "the documented -- separator is consumed by the wrapper and never forwarded to the Unity CLI"
+          "the documented -- separator is consumed by the wrapper and never forwarded to the Unity CLI",
+          "long-running pipeline commands (run_tests) hand control back after 5s by default instead of blocking on the CLI 30s wait cap; the task keeps running inside the Editor — poll test_status, and pass --wait <seconds> to wait synchronously"
         ]
       },
       {

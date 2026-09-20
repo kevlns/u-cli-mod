@@ -80,11 +80,20 @@ u-cli-mod exec <project> -- command editor_status
 u-cli-mod exec <project> -- command get_scene_hierarchy
 u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 
+# 长任务（run_tests）默认等待 5s 后让出控制权，任务继续在 Editor 内执行
+u-cli-mod exec <project> -- command run_tests --mode EditMode
+# 随后轮询结果
+u-cli-mod exec <project> -- command test_status
+# 需要同步拿到完整 Summary 时放宽等待上限（秒）
+u-cli-mod exec <project> --wait 120 -- command run_tests --mode EditMode --filter Game.AI.Tests
+
 # 清理缓存
 u-cli-mod cache clean
 ```
 
 `exec` 会把 `--project-path <工程>` 追加到 Unity CLI 参数末尾；传入任何形式的 `--project-path`（含 `-projectPath`、`--projectPath`、大小写混合）会直接报错。
+
+长任务（`run_tests`）默认只等待 5 秒：到点后任务仍在 Unity Editor 内继续执行，工具打印输出日志路径并立即返回（退出码 0）；结果用 `command test_status` 轮询，需要同步等待时用 `--wait <秒>`（`0` = 立即返回）。
 
 ## 原理
 
@@ -114,7 +123,7 @@ npm run check          # build + lint + vitest 测试 + pack guard
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.1.4.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.2.0.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
@@ -184,7 +193,7 @@ kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）
 | --- | --- | --- |
 | [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.3 |
 | [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v1.2.2 |
-| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.1.4 |
+| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.2.0 |
 
 ## Compatibility
 
