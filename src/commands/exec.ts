@@ -92,7 +92,7 @@ export function extractWaitOption(args: string[]): { args: string[]; waitSeconds
     if (arg === undefined) {
       continue;
     }
-    if (arg === '--wait' || arg === '-wait') {
+    if (arg === '--wait') {
       const value = args[i + 1];
       if (value === undefined) {
         throw new CliError('--wait 需要非负秒数。');
