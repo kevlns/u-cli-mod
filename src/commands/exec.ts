@@ -54,7 +54,7 @@ export function extractPipelineCommandName(cliArgs: string[]): string | null {
  * Wait budget (ms) for the Unity CLI child process:
  * - an explicit `--wait` wins (0 returns immediately);
  * - long-running pipeline commands get a short budget so callers can poll status;
- * - null means "wait synchronously for the CLI to finish" (unchanged behaviour).
+ * - null means "wait synchronously for the CLI to finish".
  */
 export function resolveWaitMilliseconds(
   cliArgs: string[],
