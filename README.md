@@ -119,6 +119,8 @@ u-cli-mod cache clean
 
 ```bash
 npm run check          # build + lint + vitest 测试 + pack guard
+
+> 发版除 `npm version` 外，还需同步 tests/scripts 中的版本断言（`cli.test.ts`、`vcli-manifest.test.ts`、`pack-guard.mjs`、`test-package-install.mjs`）：grep 旧版本号应为零，再打 tag。
 ```
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
