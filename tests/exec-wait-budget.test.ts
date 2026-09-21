@@ -6,6 +6,8 @@ import {
   execLogPath,
   resolveWaitMilliseconds,
   extractWaitOption,
+  buildDetachedExecCommand,
+  detachedExecBatchPath,
 } from '../src/commands/exec.js';
 import { LONG_RUNNING_PIPELINE_COMMANDS } from '../src/commands/exec.js';
 
@@ -92,5 +94,34 @@ describe('extractWaitOption', () => {
   it('throws on negative or non-numeric values', () => {
     expect(() => extractWaitOption(['--wait', '-1', 'command', 'run_tests'])).toThrow();
     expect(() => extractWaitOption(['--wait', 'soon', 'command', 'run_tests'])).toThrow();
+  });
+});
+
+describe('buildDetachedExecCommand', () => {
+  it('quotes the CLI, every argument and the log, and redirects stdout+stderr', () => {
+    const command = buildDetachedExecCommand(
+      'C:/Tools/unity cli.exe',
+      ['command', 'run_tests', '--project-path', 'C:/My Project/Client'],
+      'C:/My Project/Client/Library/exec.log',
+    );
+    expect(command).toBe(
+      '"C:/Tools/unity cli.exe" "command" "run_tests" "--project-path" ' +
+        '"C:/My Project/Client" > "C:/My Project/Client/Library/exec.log" 2>&1',
+    );
+  });
+
+  it('doubles embedded quotes so they survive cmd.exe parsing', () => {
+    const command = buildDetachedExecCommand('unity.exe', ['a"b'], 'out.log');
+    expect(command).toBe('"unity.exe" "a""b" > "out.log" 2>&1');
+  });
+});
+
+describe('detachedExecBatchPath', () => {
+  it('derives a temp batch path from the exec log name', () => {
+    const batch = detachedExecBatchPath(
+      join('C:/proj', 'Library', 'editor-pipeline-cli', 'exec-logs', '2026-09-20T03-00-00-000Z-run_tests.log'),
+      join('C:/Temp'),
+    );
+    expect(batch).toBe(join('C:/Temp', 'u-cli-mod-exec-2026-09-20T03-00-00-000Z-run_tests.cmd'));
   });
 });

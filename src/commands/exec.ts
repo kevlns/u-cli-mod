@@ -1,6 +1,7 @@
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, mkdirSync, openSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { readProjectInfo } from '../projectVersion.js';
 import { resolveRouteForProject } from '../routes.js';
 import { verifyCliBinary, ensureCliBinary } from '../ensure.js';
@@ -28,9 +29,10 @@ export function buildExecArgs(cliArgs: string[], projectPath: string): string[] 
 
 /**
  * Pipeline commands that block until the Editor-side work finishes.
- * The routed Unity CLI caps that wait at 30s, and its own `--timeout` is not wired
- * in the shipped build (verified: a full run_tests still waits ~30s with
- * `--timeout 1`), so the wait budget belongs to this wrapper.
+ * The routed Unity CLI caps that wait at 30s (`--timeout` is not wired in the
+ * shipped build), so the wait budget belongs to this wrapper; full-suite run_tests
+ * must instead use the pipeline-side `--async_tests` flag (immediate return +
+ * `test_status` polling).
  */
 export const LONG_RUNNING_PIPELINE_COMMANDS: ReadonlySet<string> = new Set(['run_tests']);
 
@@ -120,6 +122,28 @@ export function execLogPath(
   return join(projectPath, 'Library', 'editor-pipeline-cli', 'exec-logs', `${stamp}${suffix}.log`);
 }
 
+/** Quotes one token for a cmd.exe command line; embedded quotes double up. */
+function quoteForCmd(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+/**
+ * Command line for a handed-back exec, written into a temp .cmd batch: the batch
+ * owns the output redirection and is spawned as a single clean path argument, so
+ * the CLI outlives the wrapper process (numeric-fd stdio kills the detached child
+ * on Windows, and Node's quoting of an inline quoted command string breaks cmd).
+ */
+export function buildDetachedExecCommand(cliPath: string, args: string[], logPath: string): string {
+  const cli = `${quoteForCmd(cliPath)} ${args.map(quoteForCmd).join(' ')}`;
+  return `${cli} > ${quoteForCmd(logPath)} 2>&1`;
+}
+
+/** Temp batch path for a handed-back exec: wrapper plumbing, never project state. */
+export function detachedExecBatchPath(logPath: string, tmpDir: string = tmpdir()): string {
+  const base = basename(logPath).replace(/\.log$/, '.cmd');
+  return join(tmpDir, `u-cli-mod-exec-${base}`);
+}
+
 export interface ExecOptions {
   downloadIfMissing?: boolean;
   waitSeconds?: number;
@@ -141,7 +165,6 @@ export async function runExec(
   }
 
   let cliPath = cliBinaryPath(route.cli);
-  const { existsSync } = await import('node:fs');
   if (!existsSync(cliPath)) {
     if (!options.downloadIfMissing) {
       throw new CliError(
@@ -176,8 +199,8 @@ export async function runExec(
 
 /**
  * Runs the CLI under a wait budget. When the budget expires the child keeps running
- * (the Editor-side work is independent of it) and the wrapper hands control back
- * with the output log path, so callers can poll the matching status command.
+ * (cmd owns the redirection, so the CLI survives the wrapper) and the wrapper hands
+ * control back with the output log path, so callers can poll the matching status command.
  */
 async function runWithWaitBudget(
   cliPath: string,
@@ -188,20 +211,20 @@ async function runWithWaitBudget(
 ) {
   const logPath = execLogPath(projectPath, commandName);
   mkdirSync(dirname(logPath), { recursive: true });
-  const logFd = openSync(logPath, 'a');
-  const child = spawn(cliPath, args, { stdio: ['ignore', logFd, logFd], windowsHide: true });
+  const batchPath = detachedExecBatchPath(logPath);
+  writeFileSync(batchPath, `@${buildDetachedExecCommand(cliPath, args, logPath)}\r\n`);
+  const child = spawn('cmd.exe', ['/d', '/c', batchPath], { stdio: 'ignore', windowsHide: true });
   const spawnState: { error: Error | null } = { error: null };
   child.once('error', (error: Error) => {
     spawnState.error = error;
   });
   const finished = await waitForExit(child, waitMs);
-  closeSync(logFd);
 
   if (finished) {
     if (spawnState.error !== null) {
       throw new CliError(`CLI 执行失败：${spawnState.error.message}`);
     }
-    process.stdout.write(readFileSync(logPath, 'utf8'));
+    process.stdout.write(existsSync(logPath) ? readFileSync(logPath, 'utf8') : '');
     return { exitCode: child.exitCode ?? 1 };
   }
 
