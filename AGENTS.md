@@ -28,7 +28,7 @@
 6. `exec` 每次调用前都会重新校验 CLI 哈希（防篡改），属正常行为；校验失败按提示跑 `u-cli-mod cli install --force` 修复即可。
 7. **读取 Editor 当前 Console 首选 `command read_console`**，`get_console_logs` 是兼容别名；`command console` 读取回调捕获流，适合 `since`/cursor 跟随，但不能代替原生 Console 快照。工具必须经 `command <名>` 调用。若实际 schema 中缺少 `read_console`，先检查 `doctor` 的 `patchVersion`/`installedPatchVersion` 和 `state`，不要将其误认成 `console` 的别名。
 
-8. **长任务默认不阻塞**：`run_tests` 只等待 5 秒，到点后任务仍在 Editor 内继续执行，工具打印输出日志路径并立即返回（退出码 0）。此时**不要重复发起同一命令**，改用 `command test_status` 轮询结果；需要同步拿到完整 `Summary` 时传 `--wait <秒>`，并优先用 `--filter <命名空间或类名>` 缩小范围（通常数秒内即可同步返回）。
+8. **全量测试必须走 `--async_tests`**：Unity CLI 对同步命令有 30 秒硬性等待上限（`--timeout` 无法延长），同步 `run_tests` 全量必然超时且不入 `test_status` 跟踪。全量：`run_tests --mode EditMode --async_tests`（立即返回）→ 轮询 `test_status` 至 `completed` 拿完整 Summary；小范围用 `--filter` 缩到单命名空间/类，可直接同步等待拿 Summary。
 ## 典型流程
 
 ```bash
@@ -36,7 +36,7 @@ u-cli-mod doctor <project>        # 1. 体检（只读）
 u-cli-mod setup <project>         # 2. 就绪（CLI + 适配包）
 u-cli-mod exec <project> -- command editor_status   # 3. 执行
 u-cli-mod exec <project> -- command run_tests --mode EditMode --filter <命名空间或类名>  # 小范围：同步返回 Summary
-u-cli-mod exec <project> -- command run_tests --mode EditMode                                  # 全量：5s 后让出，轮询 test_status
+u-cli-mod exec <project> -- command run_tests --mode EditMode --async_tests             # 全量：立即返回，轮询 test_status
 u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 ```
 
