@@ -87,8 +87,7 @@ export async function installPipeline(
   let existingIsValid = false;
   if (existsSync(destination)) {
     try {
-      await verifyPackageRoot(destination, expectedTree);
-      existingIsValid = true;
+      existingIsValid = (await compareTree(destination, expectedTree, { allowTextLineEndings: true })).ok;
     } catch {
       existingIsValid = false;
     }

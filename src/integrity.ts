@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { basename, extname, join, relative } from 'node:path';
 import { CliError } from './errors.js';
 
 export function sha256Buffer(data: Buffer): string {
@@ -76,20 +77,50 @@ export interface TreeMismatch {
   actual?: string;
 }
 
-/** Two-way comparison: expected entries must exist with exact bytes; extra files are rejected. */
-export async function compareTree(root: string, expected: Record<string, string>): Promise<{
+export interface TreeComparisonOptions {
+  /** Installed text may have passed through Git; generated sources remain byte-exact. */
+  allowTextLineEndings?: boolean;
+}
+
+const TEXT_EXTENSIONS = new Set(['.cs', '.json', '.asmdef', '.meta', '.md', '.txt', '.unity']);
+const TEXT_FILENAMES = new Set(['CHECKSUMS', 'LICENSE']);
+
+async function matchesTextLineEndings(file: string, expected: string): Promise<boolean> {
+  if (!TEXT_EXTENSIONS.has(extname(file).toLowerCase()) && !TEXT_FILENAMES.has(basename(file))) return false;
+  const bytes = await readFile(file);
+  if (bytes.includes(0)) return false;
+  let text: string;
+  try {
+    // Preserve BOM bytes and reject invalid UTF-8 instead of silently replacing them.
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch {
+    return false;
+  }
+  const lf = text.replace(/\r\n/g, '\n');
+  return sha256Buffer(Buffer.from(lf)) === expected ||
+    sha256Buffer(Buffer.from(lf.replace(/\n/g, '\r\n'))) === expected;
+}
+
+/** Two-way comparison; optional installed-text EOL equivalence never relaxes binary hashes. */
+export async function compareTree(root: string, expected: Record<string, string>, options: TreeComparisonOptions = {}): Promise<{
   ok: boolean;
   mismatches: TreeMismatch[];
   fileCount: number;
+  lineEndingDifferences: string[];
 }> {
   const actual = await sha256Tree(root);
   const mismatches: TreeMismatch[] = [];
+  const lineEndingDifferences: string[] = [];
   for (const [path, hash] of Object.entries(expected)) {
     const real = actual.get(path);
     if (real === undefined) {
       mismatches.push({ kind: 'missing', path });
     } else if (real !== hash) {
-      mismatches.push({ kind: 'hash', path, expected: hash, actual: real });
+      if (options.allowTextLineEndings && await matchesTextLineEndings(join(root, path), hash)) {
+        lineEndingDifferences.push(path);
+      } else {
+        mismatches.push({ kind: 'hash', path, expected: hash, actual: real });
+      }
     }
   }
   for (const path of actual.keys()) {
@@ -97,7 +128,7 @@ export async function compareTree(root: string, expected: Record<string, string>
       mismatches.push({ kind: 'extra', path });
     }
   }
-  return { ok: mismatches.length === 0, mismatches, fileCount: Object.keys(expected).length };
+  return { ok: mismatches.length === 0, mismatches, fileCount: Object.keys(expected).length, lineEndingDifferences };
 }
 
 export async function assertTreeMatches(

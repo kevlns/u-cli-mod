@@ -5,6 +5,7 @@ import { readProjectInfo } from '../projectVersion.js';
 import { resolveRouteForProject, listEditorVersions, loadExpectedTree } from '../routes.js';
 import { cliBinaryPath, generatedPackageDir } from '../paths.js';
 import { compareTree, sha256File } from '../integrity.js';
+import type { TreeComparisonOptions } from '../integrity.js';
 import { queryUnityProcesses } from '../unityGuard.js';
 
 export interface DoctorOptions {
@@ -33,12 +34,12 @@ async function readInstalledPatchVersion(receiptPath: string): Promise<number | 
   return null;
 }
 
-async function packageTreeMatches(root: string, expected: Record<string, string>): Promise<boolean> {
-  if (!existsSync(root)) return false;
+async function inspectPackageTree(root: string, expected: Record<string, string>, options: TreeComparisonOptions = {}) {
+  if (!existsSync(root)) return { ok: false, mismatches: [], lineEndingDifferences: [], error: 'Package directory is missing' };
   try {
-    return (await compareTree(root, expected)).ok;
-  } catch {
-    return false;
+    return { ...await compareTree(root, expected, options), error: null };
+  } catch (err) {
+    return { ok: false, mismatches: [], lineEndingDifferences: [], error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -61,18 +62,17 @@ export async function runDoctor(projectPath: string, options: DoctorOptions = {}
     pipelinePresent &&
     installedPatchVersion !== null &&
     installedPatchVersion < route.pipeline.patchVersion;
-  const pipelineTreeMatches = pipelinePresent
-    ? await packageTreeMatches(pipelineRoot, expectedTree.files)
-    : false;
-  const pipelineInstalled = pipelinePresent && pipelineTreeMatches && !pipelineOutdated;
+  const verification = await inspectPackageTree(pipelineRoot, expectedTree.files, { allowTextLineEndings: true });
+  // Receipts live in Library and may be stale after a checkout. The pinned tree is authoritative.
+  const pipelineInstalled = pipelinePresent && verification.ok;
   const pipelineState = !pipelinePresent
     ? 'missing'
-    : pipelineOutdated
-      ? 'outdated'
-      : pipelineTreeMatches
-        ? 'current'
+    : verification.ok
+      ? 'current'
+      : pipelineOutdated
+        ? 'outdated'
         : 'invalid';
-  const pipelineSourceReady = await packageTreeMatches(generated, expectedTree.files);
+  const pipelineSourceReady = (await inspectPackageTree(generated, expectedTree.files)).ok;
   let editors: string[] = [];
   if (!options.allowRunningEditor) {
     try {
@@ -97,6 +97,7 @@ export async function runDoctor(projectPath: string, options: DoctorOptions = {}
       installed: pipelineInstalled,
       state: pipelineState,
       installedPatchVersion,
+      verification,
     },
     unityProcesses: editors,
     supportedVersions: listEditorVersions(),

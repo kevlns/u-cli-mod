@@ -33,6 +33,48 @@ function expectedMap(): Record<string, string> {
 }
 
 describe('integrity', () => {
+  it.each(['lf', 'crlf'])('accepts only EOL drift in installed UTF-8 text (%s baseline)', async (baseline) => {
+    const lf = '\uFEFFclass 示例 {\n    // preserved whitespace  \n}\n';
+    const crlf = lf.replace(/\n/g, '\r\n');
+    const expectedText = baseline === 'lf' ? lf : crlf;
+    const actualText = baseline === 'lf' ? crlf : lf;
+    writeFileSync(join(ctx.root, 'example.cs'), actualText);
+    const expected = { ...expectedMap(), 'example.cs': sha256Buffer(Buffer.from(expectedText)) };
+    expect((await compareTree(ctx.root, expected)).ok).toBe(false);
+    const result = await compareTree(ctx.root, expected, { allowTextLineEndings: true });
+    expect(result.ok).toBe(true);
+    expect(result.lineEndingDifferences).toEqual(['example.cs']);
+    expect(fs.readFileSync(join(ctx.root, 'example.cs'), 'utf8')).toBe(actualText);
+  });
+
+  it.each([
+    ['example.cs', 'class A {\n}\n', 'class B {\r\n}\r\n'],
+    ['example.cs', 'class A {\n}\n', 'class A {\r\n}'],
+    ['example.cs', 'class A {\n}\n', 'class A { \r\n}\r\n'],
+    ['example.cs', 'class A {\n}\n', '\uFEFFclass A {\r\n}\r\n'],
+    ['example.dll', 'abc\n', 'abc\r\n'],
+    ['example.cs', 'abc\0\n', 'abc\0\r\n'],
+  ])('still rejects content or binary drift in %s', async (name, expectedText, actualText) => {
+    writeFileSync(join(ctx.root, name), actualText);
+    const expected = { ...expectedMap(), [name]: sha256Buffer(Buffer.from(expectedText)) };
+    expect((await compareTree(ctx.root, expected, { allowTextLineEndings: true })).ok).toBe(false);
+  });
+
+  it('does not decode invalid UTF-8 as replacement characters', async () => {
+    writeFileSync(join(ctx.root, 'example.cs'), Buffer.from([0xff, 0x0d, 0x0a]));
+    const expected = { ...expectedMap(), 'example.cs': sha256Buffer(Buffer.from('\uFFFD\n')) };
+    expect((await compareTree(ctx.root, expected, { allowTextLineEndings: true })).ok).toBe(false);
+  });
+
+  it('recognizes the pinned package CHECKSUMS text without relaxing unknown binary names', async () => {
+    writeFileSync(join(ctx.root, 'CHECKSUMS'), 'sha256 file.dll\r\n');
+    const expected = { ...expectedMap(), CHECKSUMS: sha256Buffer(Buffer.from('sha256 file.dll\n')) };
+    expect((await compareTree(ctx.root, expected, { allowTextLineEndings: true })).ok).toBe(true);
+    writeFileSync(join(ctx.root, 'unknown'), 'binary\r\n');
+    expected.unknown = sha256Buffer(Buffer.from('binary\n'));
+    expect((await compareTree(ctx.root, expected, { allowTextLineEndings: true })).ok).toBe(false);
+  });
+
   it('matches a clean tree both ways', async () => {
     const result = await compareTree(ctx.root, expectedMap());
     expect(result.ok).toBe(true);

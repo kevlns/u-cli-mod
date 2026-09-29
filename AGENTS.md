@@ -40,7 +40,7 @@ u-cli-mod exec <project> -- command run_tests --mode EditMode --async_tests     
 u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 ```
 
-`doctor.pipeline` 的 `patchVersion` 为当前路由要求的补丁版本，`installedPatchVersion` 为 receipt 记录的版本（旧 receipt 也兼容，未知为 null）；`state` 为 `missing | outdated | invalid | current`。只有完整 expected-tree 校验通过且没有旧 patch receipt 时才返回 `installed=true`；`sourceReady` 同样经过文件树校验。
+`doctor.pipeline` 的 `patchVersion` 为当前路由要求的补丁版本，`installedPatchVersion` 为 receipt 记录的版本（旧 receipt 也兼容，未知为 null）；`state` 为 `missing | outdated | invalid | current`。完整 expected-tree 校验通过即返回 `installed=true` / `current`，不因 receipt 缺失或陈旧要求重装。`verification` 列出内容不匹配、校验错误及仅行尾差异的文件。已安装 UTF-8 文本允许 LF/CRLF 等价，其他内容及二进制仍严格校验；生成源与 staging 保持字节级校验，新生成文本统一 LF。`sourceReady=false` 仅表示生成缓存需重建，不代表已安装包失效。
 
 ## Pipeline 工具清单
 

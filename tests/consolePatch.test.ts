@@ -60,12 +60,13 @@ describe('patchConsoleCommands', () => {
     );
   });
 
-  it('is byte-idempotent and normalizes output to CRLF', () => {
+  it('is byte-idempotent and normalizes output to LF', () => {
     const once = patchConsoleCommands(UPSTREAM);
     const twice = patchConsoleCommands(once);
 
     expect(twice).toEqual(once);
-    expect(once.toString('utf8')).not.toMatch(/(?<!\r)\n/);
+    expect(once.toString('utf8')).not.toContain('\r');
+    expect(patchConsoleCommands(Buffer.from(once.toString('utf8').replace(/\n/g, '\r\n')))).toEqual(once);
   });
 
   it('fails closed when the pinned upstream anchor changes', () => {

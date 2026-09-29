@@ -52,6 +52,8 @@ u-cli-mod routes              # 列出支持的 Editor 路由
 
 升级 npm 包不会自动替换已有工程的 `Packages/com.unity.pipeline`。检查 `doctor` 的 `pipeline.state`：只有 `current` 且 `installed=true` 才表示当前补丁完整；`outdated`/`invalid` 时关闭目标 Unity Editor 后执行 `u-cli-mod pipeline install <project> --force`（自动备份）。`patchVersion` 是路由要求，`installedPatchVersion` 来自安装 receipt；仅看到上游版本 `0.5.0-exp.1` 或诊断退出码 0 不代表适配包已更新。
 
+就绪状态以当前路由的完整文件树为准，旧 receipt、缺失 receipt 或生成缓存未就绪均不会推翻已通过校验的安装。`pipeline.verification` 提供 `mismatches`、`lineEndingDifferences` 和 `error`，可直接定位失效原因。新生成的文本统一 LF；已安装 UTF-8 文本只接受 LF/CRLF 的等价差异，不忽略 BOM、空白、实际内容、缺失或额外文件，二进制保持 SHA-256 严格校验。生成缓存与安装 staging 仍要求精确字节。
+
 ## Usage
 
 > 示例中的 `<project>` 指代你的 Unity 工程目录，请替换为实际路径。
@@ -125,7 +127,7 @@ npm run check          # build + lint + vitest 测试 + pack guard
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
-- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.2.1.tgz`（与 package.json 版本一致）；
+- 包名为 `@kevlns/u-cli-mod`，tgz 文件名精确为 `kevlns-u-cli-mod-0.2.3.tgz`（与 package.json 版本一致）；
 - `files` 必须包含 `v-cli.plugin.json`，且清单身份字段（schemaVersion/package/command/bin/platforms）与包一致；
 - 不出现：
 
@@ -193,9 +195,9 @@ kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）
 
 | Package | Purpose | Status |
 | --- | --- | --- |
-| [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.3 |
-| [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v1.2.2 |
-| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.2.1 |
+| [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.13 |
+| [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v2.0.0 |
+| [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.2.3 |
 
 ## Compatibility
 

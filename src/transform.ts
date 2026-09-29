@@ -68,8 +68,8 @@ export function shouldRemove(relPath: string): boolean {
   return REMOVE_PREFIX.some((p) => relPath.startsWith(p));
 }
 
-function normalizeCrlf(buf: Buffer): Buffer {
-  return Buffer.from(buf.toString('utf8').replace(/\r?\n/g, '\r\n'), 'utf8');
+function normalizeLf(buf: Buffer): Buffer {
+  return Buffer.from(buf.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
 }
 
 /** JSON rewrite matching the verified reference: compact separators, non-ASCII escaped, key order kept. */
@@ -107,7 +107,7 @@ function patchAssetCommands(bytes: Buffer): Buffer {
     const extra = ALIAS_EXTRA_LF.split('\n').join(eol);
     s = s.replace(marker, marker + extra);
   }
-  return normalizeCrlf(Buffer.from(s, 'utf8'));
+  return normalizeLf(Buffer.from(s, 'utf8'));
 }
 
 function patchMaterialCommands(bytes: Buffer): Buffer {
@@ -124,7 +124,7 @@ function patchMaterialCommands(bytes: Buffer): Buffer {
   if (s.includes('RenderQueue = mat.rawRenderQueue,')) {
     s = s.replace('RenderQueue = mat.rawRenderQueue,', 'RenderQueue = GetRawRenderQueue(mat),');
   }
-  return normalizeCrlf(Buffer.from(s, 'utf8'));
+  return normalizeLf(Buffer.from(s, 'utf8'));
 }
 
 function metaBody(bytes: Buffer): { guid: string; rest: string } {

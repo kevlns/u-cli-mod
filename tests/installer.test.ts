@@ -99,6 +99,27 @@ describe('installPipeline', () => {
     expect(second.status).toBe('AlreadyInstalled');
   });
 
+  it('preserves an installed package after Git changes only text line endings', async () => {
+    const info = makeProjectInfo();
+    const original = 'class L {\r\n}\r\n';
+    writeFileSync(join(ctx.source, 'lib.cs'), original);
+    const hashes = { ...HASHES, 'lib.cs': sha256Buffer(Buffer.from(original)) };
+    await installPipeline(info, route, ctx.source, hashes, { guard: okGuard() });
+    const target = join(ctx.project, 'Packages', 'com.unity.pipeline', 'lib.cs');
+    writeFileSync(target, original.replace(/\r\n/g, '\n'));
+    const second = await installPipeline(info, route, ctx.source, hashes, { guard: okGuard() });
+    expect(second.status).toBe('AlreadyInstalled');
+    expect(readFileSync(target, 'utf8')).toBe('class L {\n}\n');
+    expect(existsSync(join(ctx.project, 'Library', 'editor-pipeline-cli', 'backups'))).toBe(false);
+  });
+
+  it('continues to require exact bytes in the generated source', async () => {
+    const info = makeProjectInfo();
+    writeFileSync(join(ctx.source, 'lib.cs'), 'class L {\n}\n');
+    const hashes = { ...HASHES, 'lib.cs': sha256Buffer(Buffer.from('class L {\r\n}\r\n')) };
+    await expect(installPipeline(info, route, ctx.source, hashes, { guard: okGuard() })).rejects.toThrow(/完整性校验失败/);
+  });
+
   it('refuses an inconsistent existing package without force', async () => {
     const info = makeProjectInfo();
     const dest = join(ctx.project, 'Packages', 'com.unity.pipeline');

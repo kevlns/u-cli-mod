@@ -32,13 +32,10 @@ const MATERIAL_ORIG = Buffer.from(
 );
 const ASSET_EXPECTED = Buffer.from(
   'using System;\nusing UnityEditor;\nusing UnityEngine;\nusing Object = UnityEngine.Object;\n#if !UNITY_6000_0_OR_NEWER\nusing PhysicsMaterial = UnityEngine.PhysicMaterial;\n#endif\n\nnamespace X {\n public static class AssetCommands { }\n}\n',
-).toString('utf8').replace(/\n/g, '\r\n');
+).toString('utf8');
 
 const MATERIAL_EXPECTED =
-  'using System;\nusing UnityEditor;\nusing UnityEngine;\n\nnamespace Y {\n    public static class MaterialCommands\n    {\n        private static int GetRawRenderQueue(Material material)\n        {\n            var serialized = new SerializedObject(material);\n            var property = serialized.FindProperty("m_CustomRenderQueue");\n            return property != null ? property.intValue : material.renderQueue;\n        }\n\n        public static void Run() { var x = RenderQueue = GetRawRenderQueue(mat), y = 1; }\n    }\n}\n'.replace(
-      /\n/g,
-      '\r\n',
-    );
+  'using System;\nusing UnityEditor;\nusing UnityEngine;\n\nnamespace Y {\n    public static class MaterialCommands\n    {\n        private static int GetRawRenderQueue(Material material)\n        {\n            var serialized = new SerializedObject(material);\n            var property = serialized.FindProperty("m_CustomRenderQueue");\n            return property != null ? property.intValue : material.renderQueue;\n        }\n\n        public static void Run() { var x = RenderQueue = GetRawRenderQueue(mat), y = 1; }\n    }\n}\n';
 
 const PKG_ORIG = Buffer.from(
   '{"name":"com.unity.pipeline","version":"0.5.0-exp.1","unity":"6000.0","desc":"caf\u00e9 \u2014 ok"}',
@@ -180,7 +177,8 @@ describe('transformPackage (synthetic fixture)', () => {
     expect(listFiles(ctx.out)).toEqual(Object.keys(expectedTree()).sort());
     expect(readFileSync(join(ctx.out, 'package.json'))).toEqual(rewritePackageJson(PKG_ORIG, '2022.3'));
     const asset = readFileSync(join(ctx.out, 'Editor', 'Commands', 'Assets', 'AssetCommands.cs'), 'utf8');
-    expect(asset.includes('#if !UNITY_6000_0_OR_NEWER\r\nusing PhysicsMaterial = UnityEngine.PhysicMaterial;\r\n#endif'));
+    expect(asset).toContain('#if !UNITY_6000_0_OR_NEWER\nusing PhysicsMaterial = UnityEngine.PhysicMaterial;\n#endif');
+    expect(asset).not.toContain('\r');
     expect(asset).toBe(ASSET_EXPECTED);
     const mat = readFileSync(join(ctx.out, 'Editor', 'Commands', 'Materials', 'MaterialCommands.cs'), 'utf8');
     expect(mat).toBe(MATERIAL_EXPECTED);

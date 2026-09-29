@@ -351,15 +351,15 @@ const CONSOLE_COMMANDS_BODY_LF = `        [CliCommand("read_console", "Read or c
         }
 `;
 
-function normalizeCrlf(bytes: Buffer): Buffer {
-  return Buffer.from(bytes.toString('utf8').replace(/\r?\n/g, '\r\n'), 'utf8');
+function normalizeLf(bytes: Buffer): Buffer {
+  return Buffer.from(bytes.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
 }
 
 /** Replace the callback-buffer console commands with an Editor LogEntries snapshot reader. */
 export function patchConsoleCommands(bytes: Buffer): Buffer {
   const source = bytes.toString('utf8');
   if (source.includes('[CliCommand("read_console"')) {
-    return normalizeCrlf(Buffer.from(source, 'utf8'));
+    return normalizeLf(Buffer.from(source, 'utf8'));
   }
 
   const startMarker = '        [CliCommand("get_console_logs"';
@@ -371,5 +371,5 @@ export function patchConsoleCommands(bytes: Buffer): Buffer {
   }
 
   const patched = normalized.slice(0, start) + CONSOLE_COMMANDS_BODY_LF + normalized.slice(classClose);
-  return normalizeCrlf(Buffer.from(patched, 'utf8'));
+  return normalizeLf(Buffer.from(patched, 'utf8'));
 }
