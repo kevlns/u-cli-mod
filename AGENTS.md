@@ -13,10 +13,10 @@
 - `u-cli-mod setup <project>` - CLI + 适配包一键就绪（推荐首次入口）
 - `u-cli-mod pipeline install <project> --dry-run` - 安装预览（不写入工程）
 - `u-cli-mod pipeline install <project>` - 事务式安装适配包（自动备份/回滚/receipt）
-- `u-cli-mod exec <project> -- <pipeline-args>` - 执行 Pipeline 命令（工具统一绑定 `--project-path`）
-- Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity.pipeline` 共 154 个命令，按领域分组）
-- `u-cli-mod exec <project> [--wait <秒>] -- <pipeline-args>` - 长任务默认 5s 后让出控制权，结果用对应的 `command <name>_status` 轮询
+- `u-cli-mod exec <project> [--wait <秒>] -- <pipeline-args>` - 执行 Pipeline 命令（工具统一绑定 `--project-path`）；长任务（`run_tests`）默认 5s 后让出控制权，结果用对应的 `command <name>_status` 轮询
 - `u-cli-mod routes` / `u-cli-mod cache clean` - 路由表 / 缓存清理
+
+Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity.pipeline`，按领域分组）。
 
 ## 使用规范（Agent 必须遵守）
 
@@ -27,8 +27,8 @@
 5. **版本路由是精确匹配**（`m_EditorVersion` + revision 同时一致），没有"就近版本"回退；工程版本不在路由表内时如实报告支持列表，不得猜测、不得改写 `ProjectVersion.txt`。
 6. `exec` 每次调用前都会重新校验 CLI 哈希（防篡改），属正常行为；校验失败按提示跑 `u-cli-mod cli install --force` 修复即可。
 7. **读取 Editor 当前 Console 首选 `command read_console`**，`get_console_logs` 是兼容别名；`command console` 读取回调捕获流，适合 `since`/cursor 跟随，但不能代替原生 Console 快照。工具必须经 `command <名>` 调用。若实际 schema 中缺少 `read_console`，先检查 `doctor` 的 `patchVersion`/`installedPatchVersion` 和 `state`，不要将其误认成 `console` 的别名。
+8. **全量测试必须走 `--async_tests`**：Unity CLI 对同步命令有 30 秒硬性等待上限（`--timeout` 无法延长），同步 `run_tests` 全量必然超时且不入 `test_status` 跟踪。用法：`run_tests --mode EditMode --async_tests`（立即返回）→ 轮询 `test_status` 至 `completed` 拿完整 Summary；小范围用 `--filter` 缩到单命名空间/类，可直接同步等待拿 Summary。
 
-8. **全量测试必须走 `--async_tests`**：Unity CLI 对同步命令有 30 秒硬性等待上限（`--timeout` 无法延长），同步 `run_tests` 全量必然超时且不入 `test_status` 跟踪。全量：`run_tests --mode EditMode --async_tests`（立即返回）→ 轮询 `test_status` 至 `completed` 拿完整 Summary；小范围用 `--filter` 缩到单命名空间/类，可直接同步等待拿 Summary。
 ## 典型流程
 
 ```bash
@@ -40,7 +40,9 @@ u-cli-mod exec <project> -- command run_tests --mode EditMode --async_tests     
 u-cli-mod exec <project> -- command read_console --types error,warning --count 100
 ```
 
-`doctor.pipeline` 的 `patchVersion` 为当前路由要求的补丁版本，`installedPatchVersion` 为 receipt 记录的版本（旧 receipt 也兼容，未知为 null）；`state` 为 `missing | outdated | invalid | current`。完整 expected-tree 校验通过即返回 `installed=true` / `current`，不因 receipt 缺失或陈旧要求重装。`verification` 列出内容不匹配、校验错误及仅行尾差异的文件。已安装 UTF-8 文本允许 LF/CRLF 等价，其他内容及二进制仍严格校验；生成源与 staging 保持字节级校验，新生成文本统一 LF。`sourceReady=false` 仅表示生成缓存需重建，不代表已安装包失效。
+### doctor 输出要点
+
+`doctor.pipeline` 的 `patchVersion` 为当前路由要求的补丁版本，`installedPatchVersion` 为 receipt 记录的版本（缺失或未知为 null）；`state` 为 `missing | outdated | invalid | current`。完整 expected-tree 校验通过即返回 `installed=true` / `current`，receipt 缺失或陈旧不触发重装。`verification` 列出内容不匹配、校验错误及仅行尾差异的文件。已安装 UTF-8 文本允许 LF/CRLF 等价，其他内容及二进制仍严格校验；生成源与 staging 保持字节级校验，新生成文本统一 LF。`sourceReady=false` 仅表示生成缓存需重建，不代表已安装包失效。
 
 ## Pipeline 工具清单
 

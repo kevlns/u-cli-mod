@@ -106,9 +106,9 @@ u-cli-mod cache clean
 5. 事务式安装到 `Packages/com.unity.pipeline`：staging → 校验 → 备份 → 替换 → 再校验 → receipt；任一步失败自动回滚。运行中的 Unity Editor 会 fail-closed 阻止安装。
 6. `exec` 每次调用前重新校验 CLI 哈希，并**禁止任何 `--project-path` 变体覆盖目标工程**。
 
-> **缓存目录说明**：用户缓存默认为 `%LOCALAPPDATA%\editor-pipeline-cli`；该目录名沿用历史名称，以避免破坏已通过验证的缓存/收据契约。工程内的安装事务目录 `Library/editor-pipeline-cli` 同理保留。这两个目录名与 npm 包名 `@kevlns/u-cli-mod` 无关，属于兼容性保留项。
+> **缓存目录说明**：用户缓存固定为 `%LOCALAPPDATA%\editor-pipeline-cli`，工程内的安装事务目录固定为 `Library/editor-pipeline-cli`。两个目录名是缓存与 receipt 契约的一部分，不随 npm 包名（`@kevlns/u-cli-mod`）变化；改名会使既有缓存与 receipt 失效。
 
-## 本仓库/包 与 不包含
+## 包内容与分发边界
 
 - ✅ 只包含本工具自己的 TypeScript 代码、版本路由元数据与哈希清单。
 - ✅ Unity CLI 与 `com.unity.pipeline` 在**运行时**从 Unity 官方地址下载到**用户缓存**。
@@ -121,9 +121,9 @@ u-cli-mod cache clean
 
 ```bash
 npm run check          # build + lint + vitest 测试 + pack guard
+```
 
 > 发版除 `npm version` 外，还需同步 tests/scripts 中的版本断言（`cli.test.ts`、`vcli-manifest.test.ts`、`pack-guard.mjs`、`test-package-install.mjs`）：grep 旧版本号应为零，再打 tag。
-```
 
 `pack:guard` 会执行真实 `npm pack`（含文件清单校验），断言发布包：
 
@@ -139,7 +139,7 @@ npm run check          # build + lint + vitest 测试 + pack guard
 
 ### v-cli 插件清单
 
-`v-cli.plugin.json` 随包发布（`package.json` 中 `vCli.manifest` 指向），声明 v-cli 命令 `unity`（平台 win32）与全部公共命令路径、参数、选项、输出与副作用元数据。`tests/vcli-manifest.test.ts` 以 `buildProgram()` 为行为源校验清单：命令树、参数、选项（flags 与描述）、usage 逐项一致，任何 CLI 定义变更未同步清单都会失败。
+`v-cli.plugin.json` 随包发布（`package.json` 中 `vCli.manifest` 指向），声明 v-cli 命令 `unity`（平台 win32）与全部公共命令路径、参数、选项、输出与副作用元数据。`tests/vcli-manifest.test.ts` 以 `buildProgram()` 为行为源校验清单：命令树、参数、选项（flags 与描述）、usage 逐项一致；同一测试还把 AGENTS.md 的 154 条 Pipeline 命令目录与清单逐条互锁——两处任一未同步都会失败。
 
 ### 本地 tarball 安装矩阵（三模式验证）
 
@@ -147,7 +147,7 @@ npm run check          # build + lint + vitest 测试 + pack guard
 npm run test:package
 ```
 
-构建真实 tgz，并在本地验证三种消费方式：工程 devDependency（`node_modules/.bin`）、带临时 `--prefix` 的全局安装、`npx --package <本地tgz>`；每种都执行 `u-cli-mod --version` 与 `u-cli-mod routes`。**不会**向任何 registry 发布。报告：`<临时目录>/u-cli-mod-package-test-report.json`（可用 `EPC_PKG_REPORT` 覆盖）。
+构建真实 tgz，并在本地验证三种消费方式：工程 devDependency（`node_modules/.bin`）、带临时 `--prefix` 的全局安装、`npx --package <本地tgz>`；每种都执行 `u-cli-mod --version` 与 `u-cli-mod routes`。**不会**向任何 registry 发布。报告：`C:/tmp/u-cli-mod-package-test-report.json`（可用 `EPC_PKG_REPORT` 覆盖）。
 
 ### 自托管 Runner 与 Unity E2E
 
@@ -157,30 +157,30 @@ npm run e2e:windows        # 完整 Unity E2E（真实下载/转换/编译/命�
 ```
 
 - `preflight:runner` 只读，不下载/注册 Runner；结果 JSON 输出到 stdout。
-- `e2e:windows` 使用**隔离缓存**（干净环境）或显式复用已验证缓存，创建 `<临时目录>/u-cli-mod-e2e/` 下独立临时工程，全部结束后杀掉它启动的所有 Unity 进程并清理临时工程；报告写入 `<临时目录>/u-cli-mod-e2e-report.json`（分别可用 `EPC_E2E_ROOT`、`EPC_E2E_REPORT` 覆盖）。
+- `e2e:windows` 默认使用隔离缓存（设 `EPC_E2E_FRESH_CACHE=0` 可复用真实用户缓存），在 `C:/tmp/u-cli-mod-e2e/` 下创建独立临时工程，全部结束后杀掉它启动的所有 Unity 进程并清理临时工程；报告写入 `C:/tmp/u-cli-mod-e2e-report.json`（分别可用 `EPC_E2E_ROOT`、`EPC_E2E_REPORT` 覆盖）。
 - 验收指标：200 次只读调用 100% 成功并记录 P50/P95、`read_console` 原生 Console 历史读取与统一清理、20 轮资源修改、5 次 Domain Reload 首次恢复、强杀重启恢复、双工程显式路由 60 次无误选、运行中 Editor 防护与 `--project-path` 覆盖拒绝。
 
 详细说明见 `docs/SELF_HOSTED_RUNNER.md`。
 
 ### GitHub Actions
 
-- `.github/workflows/ci.yml`：hosted windows runner 上跑 `npm ci` + `npm run check` + `npm audit --omit=dev` + 禁用扩展名扫描；push/PR 触发。
+- `.github/workflows/ci.yml`：hosted windows runner 上跑 `npm ci` + `npm run check` + `npm audit --omit=dev` + 违禁产物扩展名扫描；push/PR 触发。
 - `.github/workflows/e2e-windows.yml`：**self-hosted** runner（标签 `self-hosted/windows/unity-2022.3.62f3c1`）上跑 Unity E2E；仅 `workflow_dispatch` 与受保护 `v*` tag 触发，不跑 pull_request，不发布；权限最小化（contents: read）；产物 `u-cli-mod-e2e-report`。
+- `.github/workflows/publish.yml`：`v*` tag 触发，GitHub 托管 runner 上以 OIDC Trusted Publisher 短期凭证发布到 npm，不保存长期 NPM_TOKEN。
 
 ## Routes
 
 | Editor | Revision | CLI | Pipeline | 状态 |
 |---|---|---|---|---|
 | `2022.3.62f3c1` | `1623fc0bbb97` | `1.0.0-beta.2` | `0.5.0-exp.1`（适配版） | 已验证（非官方移植） |
-| `2022.3.59f1c1` | `6f0f5d6fe989` | `1.0.0-beta.2` | `0.5.0-exp.1`（适配版） | 已验证（非官方移植；同一上游 tgz 与补丁规则，适配载荷与 62f3 逐字节一致，已在 2022.3.59f1c1 编辑器完成真机回归） |
+| `2022.3.59f1c1` | `6f0f5d6fe989` | `1.0.0-beta.2` | `0.5.0-exp.1`（适配版） | 已验证（非官方移植；与 62f3 共用同一上游 tgz 与补丁规则，适配载荷逐字节一致；2022.3.59f1c1 真机回归通过） |
 
-新增 Editor 版本时必须：新增 `routes/<版本>.json` 与 `routes/expected-tree/<版本>.json`、对应转换模板与补丁规则，并在该版本 Unity 上重新完成编译与回归测试。不得让相近版本复用既有路由。
+新增 Editor 版本要求：添加 `routes/<版本>.json` 与 `routes/expected-tree/<版本>.json`、对应转换模板与补丁规则，并在该版本 Unity 上完成编译与回归测试；相近版本不得复用既有路由。
 
 ## 目录
 
 ```text
-routes/          精确版本路由 + expected-tree 哈希清单
-routes/expected-tree/   385 文件 SHA-256 清单（含 Tests.meta）
+routes/          精确版本路由；expected-tree/ 子目录为 385 文件 SHA-256 清单（含 Tests.meta）
 templates/       Unity 生成的 .meta 模板（数据，非 Unity 源码）
 AGENTS.md        AI Agent 使用规范（场景/规范/速览）
 src/             TypeScript 实现
@@ -193,11 +193,12 @@ scripts/         pack-guard / preflight-runner / e2e-windows / test-package-inst
 
 kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）。
 
-| Package | Purpose | Status |
+| Package | Purpose | Version |
 | --- | --- | --- |
-| [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.13 |
+| [`v-cli`](https://github.com/kevlns/v-cli) | 个人工具箱 CLI | v0.2.14 |
 | [`xlmerge`](https://github.com/kevlns/xlmerge) | Git 中 .xlsx/.xlsm 冲突可视化解决工具 | v2.0.0 |
 | [`u-cli-mod`](https://github.com/kevlns/u-cli-mod) | Unity 精确版本路由 + CLI + pipeline 包（Windows-first，本仓库） | v0.2.3 |
+| [`figma-to-uprefab`](https://github.com/kevlns/figma-to-uprefab) | Figma 导出、契约校验与 Unity UGUI staging Prefab 构建 | v0.1.1 |
 
 ## Compatibility
 
@@ -210,14 +211,14 @@ kevlns 工具家族共享同一套发布约定（tag 驱动、CI 护栏、MIT）
 
 ```bash
 npm ci
-npm run check          # build + lint + test + pack:guard 一键
+npm run check          # build + lint + vitest 测试 + pack guard
 ```
 
 For bugs and feature requests, use [GitHub Issues](https://github.com/kevlns/u-cli-mod/issues).
 
 ## License
 
-本工具代码为 MIT（见 LICENSE）。运行时下载的 Unity CLI 与 `com.unity.pipeline` 归其各自的 Unity 许可（如 Unity Package Distribution License）约束，不在本仓库/包内分发。本工具与 Unity 无关，非官方项目。
+本工具代码为 MIT（见 LICENSE）。运行时下载的 Unity CLI 与 `com.unity.pipeline` 归其各自的 Unity 许可（如 Unity Package Distribution License）约束，不在本仓库/包内分发。
 
 <div align="center">
 
