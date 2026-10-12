@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { buildProgram } from '../src/cli.js';
 import type { Command } from 'commander';
 
@@ -52,7 +53,7 @@ interface Manifest {
   };
 }
 
-const EXPECTED_VERSION = '0.2.4';
+const EXPECTED_VERSION = (JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf-8')) as { version: string }).version;
 const EXPECTED_PACKAGE = '@kevlns/u-cli-mod';
 const MANIFEST_PATH = 'v-cli.plugin.json';
 const AGENT_DOC_PATH = 'AGENTS.md';

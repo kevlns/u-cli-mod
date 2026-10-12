@@ -28,6 +28,7 @@ Pipeline 命令全集见文末「Pipeline 工具清单」（适配版 `com.unity
 6. `exec` 每次调用前都会重新校验 CLI 哈希（防篡改），属正常行为；校验失败按提示跑 `u-cli-mod cli install --force` 修复即可。
 7. **读取 Editor 当前 Console 首选 `command read_console`**，`get_console_logs` 是兼容别名；`command console` 读取回调捕获流，适合 `since`/cursor 跟随，但不能代替原生 Console 快照。工具必须经 `command <名>` 调用。若实际 schema 中缺少 `read_console`，先检查 `doctor` 的 `patchVersion`/`installedPatchVersion` 和 `state`，不要将其误认成 `console` 的别名。
 8. **全量测试必须走 `--async_tests`**：Unity CLI 对同步命令有 30 秒硬性等待上限（`--timeout` 无法延长），同步 `run_tests` 全量必然超时且不入 `test_status` 跟踪。用法：`run_tests --mode EditMode --async_tests`（立即返回）→ 轮询 `test_status` 至 `completed` 拿完整 Summary；小范围用 `--filter` 缩到单命名空间/类，可直接同步等待拿 Summary。
+9. **任务身份（patchVersion 3）**：`run_tests --async_tests` 的响应含 `RunId`；`test_status --run_id <id>` 只返回该次运行的记录（不存在/被顶替时返回 `unknown_run`，**绝不回退最近一次**）；`cancel_tests --run_id <id>` 定向取消（不匹配或无活动运行返回 `unknown_run`/`no_active_run` 且零副作用）。`recompile` 响应含 `runId`，`recompile_status --run_id <id>` 同语义（引擎自发编译的终态 `runId` 为 null，按 id 查询即 `unknown_run`）。连续两次 `run_tests` 会顶替旧运行的追踪槽位——旧 id 的查询会得到 `unknown_run` 而不是新运行的报告。已知限制：`recompile` 连发时后发 runId 会覆盖 pending id，前一编译批次的引擎事件终态记在后发 id 名下（旧 id 查询 `unknown_run` 正确拒绝）；legacy 无参 `cancel_tests` 保持原行为（会覆写最近一次状态记录）。
 
 ## 典型流程
 
@@ -113,7 +114,7 @@ u-cli-mod exec <project> -- command read_console --types error,warning --count 1
 - `get_serialized_fields` — Read serialized fields of a component/asset. Returns each top-level field's name, type and value (object references are returned as re-usable handles). Pass 'field' to read a single SerializedProperty path.
 - `hotreload_status` — Show current hot reload registry status and statistics
 - `recompile` — Force a script recompile (works while unfocused/minimized). Poll recompile_status for completion.
-- `recompile_status` — Get the status of the last recompile: idle | triggered | compiling | completed | up_to_date.
+- `recompile_status` — Get the status of the last recompile: idle | triggered | compiling | completed | up_to_date (optional run_id for correlated query).
 - `reload_file` — Compile and apply in-place [HotReload] edits from a source file
 - `reload_file_override` — Compile and apply hot reload file changes immediately
 - `set_serialized_field` — Set a serialized field on a component/asset. Supports primitives, enums, Vector/Color/Rect/Bounds, object references (value = an ObjectRef: asset by guid/fileId/path or scene object by instanceId/hierarchyPath), and array elements via 'name.Array.data[i]' (or 'name.Array.size' to resize).
@@ -153,10 +154,10 @@ u-cli-mod exec <project> -- command read_console --types error,warning --count 1
 - `package_status` — Status of the last async package operation (add/remove/resolve): idle | in_progress | completed | failed, with the added package, manifest, and any error.
 
 ### 测试
-- `cancel_tests` — Cancel running test execution
+- `cancel_tests` — Cancel running test execution (optional run_id for directed cancel; mismatch = no side effects)
 - `list_tests` — List all available tests (EditMode and/or PlayMode) without running them
 - `run_tests` — Execute Unity tests with filtering options
-- `test_status` — Get status of running async test execution
+- `test_status` — Get status of running async test execution (optional run_id for correlated query; unknown_run otherwise)
 
 ### 烘焙（光照 / NavMesh / 遮挡）
 - `bake_lighting` — Trigger an async lightmap bake of the open scene(s) via Lightmapping.BakeAsync(). Returns immediately; poll lighting_bake_status until completed.

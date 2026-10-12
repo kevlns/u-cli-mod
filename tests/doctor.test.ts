@@ -42,7 +42,7 @@ afterEach(() => {
 
 describe('runDoctor pipeline state', () => {
   it.each(['old', 'missing', 'malformed', 'current'])('trusts verified content with a %s receipt and reports EOL drift', async (receiptState) => {
-    const { root, project } = makeProjectWithReceipt(receiptState === 'old' ? 1 : 2);
+    const { root, project } = makeProjectWithReceipt(receiptState === 'old' ? 2 : 3);
     process.env.LOCALAPPDATA = join(root, 'local-app-data');
     const packageRoot = join(project, 'Packages', 'com.unity.pipeline');
     const receipt = join(project, 'Library', 'editor-pipeline-cli', 'receipt.json');
@@ -75,7 +75,7 @@ describe('runDoctor pipeline state', () => {
 
     expect(result.pipeline).toMatchObject({
       version: '0.5.0-exp.1',
-      patchVersion: 2,
+      patchVersion: 3,
       sourceReady: false,
       present: true,
       installed: false,
@@ -85,17 +85,17 @@ describe('runDoctor pipeline state', () => {
   });
 
   it('reports a current receipt with a mismatched package tree as invalid', async () => {
-    const { root, project } = makeProjectWithReceipt(2);
+    const { root, project } = makeProjectWithReceipt(3);
     process.env.LOCALAPPDATA = join(root, 'local-app-data');
 
     const result = await runDoctor(project, { allowRunningEditor: true });
 
     expect(result.pipeline).toMatchObject({
-      patchVersion: 2,
+      patchVersion: 3,
       present: true,
       installed: false,
       state: 'invalid',
-      installedPatchVersion: 2,
+      installedPatchVersion: 3,
     });
   });
 });

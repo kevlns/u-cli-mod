@@ -1,4 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -100,7 +102,9 @@ describe('buildProgram (commander wiring)', () => {
     } finally {
       cap.restore();
     }
-    expect(cap.get()).toContain('0.2.4');
+    expect(cap.get()).toContain(
+      (JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf-8')) as { version: string }).version,
+    );
   });
 
   it('unknown top-level command fails closed with exit code 1', async () => {
