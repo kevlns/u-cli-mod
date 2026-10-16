@@ -102,7 +102,7 @@ export function buildProgram(): Command {
 
   program
     .command('setup <project>')
-    .description('cli install + pipeline install')
+    .description('依次执行 cli install 和 pipeline install。')
     .option('--force', '覆盖现有不一致的包')
     .option('--allow-running-editor', '跳过运行中 Editor 的 fail-closed 保护')
     .option('--dry-run', '只校验与预览，不写入工程')

@@ -1,7 +1,7 @@
 {
   "name": "@kevlns/u-cli-mod",
-  "version": "0.3.0",
-  "description": "u-cli-mod: pin exact Unity Editor version routes and install the adapted com.unity.pipeline package for Unity 2022 (Windows-first). Downloads Unity assets at runtime into the user cache; the package itself contains no Unity binaries or package source. Not an official Unity project.",
+  "version": "0.3.1",
+  "description": "按 Unity Editor 精确版本定位工具链，校验和安装 com.unity.pipeline，并执行工程命令。",
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -21,7 +21,8 @@
     "v-cli.plugin.json",
     "AGENTS.md",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "docs/"
   ],
   "repository": {
     "type": "git",
@@ -31,10 +32,7 @@
   "bugs": {
     "url": "https://github.com/kevlns/u-cli-mod/issues"
   },
-  "author": {
-    "name": "kevlns",
-    "email": "936277610@qq.com"
-  },
+  "author": "Vant",
   "keywords": [
     "unity",
     "unity-editor",
@@ -51,10 +49,11 @@
     "test": "vitest run",
     "lint": "eslint src tests --max-warnings=0",
     "pack:guard": "node scripts/pack-guard.mjs",
-    "check": "npm run build && npm run lint && npm test && npm run pack:guard",
+    "check": "npm run docs:style && npm run build && npm run lint && npm test && npm run pack:guard",
     "preflight:runner": "node scripts/preflight-runner.mjs",
     "e2e:windows": "node scripts/e2e-windows.mjs",
-    "test:package": "node scripts/test-package-install.mjs"
+    "test:package": "node scripts/test-package-install.mjs",
+    "docs:style": "node scripts/check-documentation.mjs"
   },
   "dependencies": {
     "commander": "^13.1.0",

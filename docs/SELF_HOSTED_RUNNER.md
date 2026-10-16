@@ -1,17 +1,27 @@
-# 自托管 Unity E2E Runner（本地准备指南）
+# Vant 自托管 Unity E2E Runner（本地准备指南）
+
+## 定位
+
+自托管 Unity E2E Runner（本地准备指南），适用于当前随包实现。
+
+## 前置条件
+
+先按包的环境要求准备工程与工具，使用实际配置和命令帮助核对目标。
+
+## 操作流程
 
 仓库：github.com/kevlns/u-cli-mod（Windows-first，非 Unity 官方项目）。
 本仓库工具链不含发布能力，npm 发布仅由 GitHub Actions 的 publish 工作流完成。以下内容是 **注册前检查清单**。实际注册
 应在 GitHub 仓库 `Settings -> Actions -> Runners` 中完成（需要仓库管理员权限），
 本工具只会做只读预检，**不会下载或注册 Runner**。
 
-## 建议机器
+### 建议机器
 
 - 专用 Windows 10/11 或 Windows Server 虚拟机（推荐），或专用物理机。
 - 至少 8 GB 内存、20 GB 空闲磁盘。
 - 不建议长期使用日常开发机，避免执行仓库内不可信任务。
 
-## 必须安装
+### 必须安装
 
 | 组件 | 要求 | 验证 |
 |---|---|---|
@@ -23,7 +33,7 @@
 | Unity Editor | `2022.3.62f3c1`，含 Windows build support | 见下方预检 |
 | Unity 许可证 | 可用的个人/专业许可 | 预检中的 license probe |
 
-## 预检命令（不注册、不下载、只读）
+### 预检命令（不注册、不下载、只读）
 
 ```powershell
 cd u-cli-mod
@@ -43,7 +53,7 @@ npm run preflight:runner
 - `EPC_RUNNER_DIR`：建议的 Runner 目录（默认 `C:\unity-runner`）。
 - `EPC_PREFLIGHT_VERSION` / `EPC_PREFLIGHT_REVISION`：期望的 Editor 版本/revision。
 
-## 注册后标签
+### 注册后标签
 
 Runner 必须带以下标签，E2E 工作流才会路由到它：
 
@@ -60,7 +70,7 @@ unity-2022.3.62f3c1
 .\config.cmd --labels self-hosted,windows,unity-2022.3.62f3c1
 ```
 
-## 安全策略
+### 安全策略
 
 - E2E 工作流**只**从 `workflow_dispatch` 与受保护 tag（`v*`）触发，
   **不运行 pull_request**，避免不可信 Fork 代码在自托管机器上执行。
@@ -71,7 +81,7 @@ unity-2022.3.62f3c1
 - 定期更新 Runner 与 Unity Patch；升级 Unity 版本必须在
   `routes/<版本>.json` 新增独立路由并完成回归后才能使用。
 
-## 自测（不依赖 GitHub）
+### 自测（不依赖 GitHub）
 
 注册前可在本机完整跑一遍 E2E：
 
@@ -80,3 +90,11 @@ npm run e2e:windows
 ```
 
 报告默认写入 `C:/tmp/u-cli-mod-e2e-report.json`（可用 `EPC_E2E_REPORT` 覆盖）。E2E 默认使用隔离缓存（设 `EPC_E2E_FRESH_CACHE=0` 可复用真实用户缓存）并清理所有它启动的 Unity 进程。
+
+## 结果验证
+
+结合原始错误、结构化结果和实际产物核验；测试与真实平台执行分别记录。
+
+## 参考资料
+
+[使用说明](../README.md)
