@@ -104,7 +104,7 @@ u-cli-mod cache clean
 ```text
 routes/          精确版本路由；expected-tree/ 子目录为 385 文件 SHA-256 清单（含 Tests.meta）
 templates/       Unity 生成的 .meta 模板（数据，非 Unity 源码）
-AGENTS.md        AI Agent 使用规范（场景/规范/速览）
+skills/unity/    Unity 运行技能与操作参考
 src/             TypeScript 实现
 tests/           Vitest 单元测试（自编合成 fixture，不含 Unity 源码）
 scripts/         pack-guard / preflight-runner / e2e-windows / test-package-install
@@ -123,7 +123,7 @@ npm run test:package
 
 ## 文档
 
-[Agent 调用规范](AGENTS.md) · [文档规范](docs/documentation.md) · [自托管 Unity E2E Runner（本地准备指南）](docs/SELF_HOSTED_RUNNER.md)
+[Agent 调用规范](skills/unity/SKILL.md) · [文档规范](docs/documentation.md) · [自托管 Unity E2E Runner（本地准备指南）](docs/SELF_HOSTED_RUNNER.md)
 
 ## 许可与版权
 

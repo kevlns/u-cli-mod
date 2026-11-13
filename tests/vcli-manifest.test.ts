@@ -56,9 +56,10 @@ interface Manifest {
 const EXPECTED_VERSION = (JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf-8')) as { version: string }).version;
 const EXPECTED_PACKAGE = '@kevlns/u-cli-mod';
 const MANIFEST_PATH = 'v-cli.plugin.json';
-const AGENT_DOC_PATH = 'AGENTS.md';
+const AGENT_DOC_PATH = 'skills/unity/references/project.md';
 
-const MANIFEST_KEYS = ['agent', 'bin', 'command', 'description', 'environment', 'package', 'platforms', 'runtime', 'schemaVersion'];
+const MANIFEST_KEYS = ['agent', 'bin', 'command', 'description', 'environment', 'package', 'platforms', 'runtime', 'schemaVersion', 'skills',
+];
 const COMMAND_KEYS = ['arguments', 'description', 'exitCodes', 'options', 'output', 'path', 'safety', 'usage'];
 const OPTION_KEYS = ['description', 'flags'];
 const ARGUMENT_KEYS = ['description', 'name', 'required'];
@@ -263,7 +264,7 @@ describe('release consistency (package pointer, files, versions)', () => {
   it('ships a non-empty package AGENTS.md', () => {
     const pkg = loadJson<{ files: string[] }>('package.json');
     const doc = new URL(`../${AGENT_DOC_PATH}`, import.meta.url);
-    expect(pkg.files).toContain(AGENT_DOC_PATH);
+    expect(pkg.files).toContain('skills/');
     expect(existsSync(doc)).toBe(true);
     expect(readFileSync(doc, 'utf8').trim().length).toBeGreaterThan(0);
   });
@@ -300,7 +301,7 @@ describe('pipeline command catalog (agent.pipelineCommands)', () => {
     const manifest = loadManifest();
     const doc = readFileSync(new URL(`../${AGENT_DOC_PATH}`, import.meta.url), 'utf8');
     const mdTools = new Map<string, string>();
-    for (const line of doc.split('\n')) {
+    for (const line of doc.split(/\r?\n/)) {
       const m = line.match(/^- `([a-z][a-z0-9_]*)` — (.+)$/);
       if (m) mdTools.set(m[1], m[2]);
     }

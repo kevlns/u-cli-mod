@@ -531,5 +531,11 @@
         }
       }
     ]
-  }
+  },
+  "skills": [
+    {
+      "id": "unity",
+      "path": "skills/unity/SKILL.md"
+    }
+  ]
 }

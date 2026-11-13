@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/u-cli-mod",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "按 Unity Editor 精确版本定位工具链，校验和安装 com.unity.pipeline，并执行工程命令。",
   "private": false,
   "publishConfig": {
@@ -22,7 +22,8 @@
     "AGENTS.md",
     "README.md",
     "LICENSE",
-    "docs/"
+    "docs/",
+    "skills/"
   ],
   "repository": {
     "type": "git",
