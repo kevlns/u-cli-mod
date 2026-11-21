@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

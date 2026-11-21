@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { buildProgram } from '../src/cli.js';
 

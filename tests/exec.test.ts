@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { describe, it, expect } from 'vitest';
 import { findProjectPathOverride, buildExecArgs } from '../src/commands/exec.js';
 

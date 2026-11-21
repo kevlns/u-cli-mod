@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * Regenerate routes/expected-tree/<version>.json from the current transform.
  *

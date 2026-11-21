@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { CliError } from './errors.js';

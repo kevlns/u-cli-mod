@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { join, resolve } from 'node:path';
 import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import { CliError } from './errors.js';

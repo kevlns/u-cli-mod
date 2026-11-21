@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { readProjectInfo } from '../projectVersion.js';
 import { resolveRouteForProject, loadExpectedTree } from '../routes.js';
 import { ensureCliBinary, ensurePipelineSource } from '../ensure.js';

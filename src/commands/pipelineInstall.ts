@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { readProjectInfo } from '../projectVersion.js';
 import { resolveRouteForProject } from '../routes.js';
 import { ensurePipelineSource } from '../ensure.js';

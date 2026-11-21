@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 自托管 Unity E2E Runner（本地准备指南）
 
 ## 定位

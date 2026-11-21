@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 // npm pack content guard: fail when the tarball would contain Unity binaries,
 // DLLs, upstream tgz files, or a vendored com.unity.pipeline source tree.
 // Runs a REAL `npm pack` into an isolated temp dir and verifies both the file

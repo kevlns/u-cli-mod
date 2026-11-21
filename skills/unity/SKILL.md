@@ -2,6 +2,8 @@
 name: unity
 description: "按 Unity Editor 精确版本定位工具链，校验和安装 com.unity.pipeline，并执行工程命令。"
 ---
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 
 # Unity 工程
 

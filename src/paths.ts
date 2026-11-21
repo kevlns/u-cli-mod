@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { cliCacheDir, pipelineCacheDir, generatedDir } from './config.js';

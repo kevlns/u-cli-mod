@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { ensureCliBinary } from '../ensure.js';
 import { loadRoute, listEditorVersions } from '../routes.js';
 import { ensureCacheLayout, cliCacheDir } from '../config.js';

@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readdirSync, statSync } from 'node:fs';

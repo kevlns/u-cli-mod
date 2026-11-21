@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant Unity 工程工具 Agent 规范
 
 ## 定位
@@ -265,4 +267,4 @@ u-cli-mod exec <project> -- command read_console --types error,warning --count 1
 
 ## 许可与版权
 
-MIT。Copyright © 2026 Vant。
+MIT。Copyright © 2026 Vant <sl_kevln@163.com>。

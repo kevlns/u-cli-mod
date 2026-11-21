@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { createWriteStream, renameSync, rmSync } from 'node:fs';
 import { basename, join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';

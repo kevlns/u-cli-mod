@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { Command } from 'commander';
 import { CliError } from './errors.js';
 import { runDoctor } from './commands/doctor.js';

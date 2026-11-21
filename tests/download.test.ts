@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createServer, type Server } from 'node:http';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';

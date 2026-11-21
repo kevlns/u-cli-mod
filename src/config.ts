@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';

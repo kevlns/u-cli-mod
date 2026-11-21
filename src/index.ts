@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 export { buildProgram, main } from './cli.js';
 export { CliError } from './errors.js';
 export { parseProjectVersion, readProjectInfo } from './projectVersion.js';
