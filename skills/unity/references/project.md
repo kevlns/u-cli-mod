@@ -267,4 +267,4 @@ u-cli-mod exec <project> -- command read_console --types error,warning --count 1
 
 ## 许可与版权
 
-MIT。Copyright © 2026 Vant <sl_kevln@163.com>。
+LGPLv3（含 Vant 应用开发例外）。Copyright © 2026 Vant <sl_kevln@163.com>。
